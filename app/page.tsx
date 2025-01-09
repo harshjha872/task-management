@@ -5,14 +5,38 @@
 import { ChevronDown, Search } from "lucide-react";
 import Navbar from "@/components/navbar/navbar";
 import Accordian from "@/components/accordian/accordian";
+
+import { useState } from "react";
+
+const Tabss = ["list", "Board"];
+
 export default function Home() {
   // const dispatch = useAppDispatch()
   // const counter = useAppSelector((state) => state.todoSlice.counter);
-
+  const [activeTab, setActiveTab] = useState(0);
   return (
     <div className="">
       <Navbar />
+      <div className="px-4 my-2 flex justify-between items-center">
+        <div className="flex space-x-2">
+          {Tabss.map((tab, index) => (
+            <div
+              onClick={() => setActiveTab(index)}
+              key={index * 99}
+              className={`${
+                index === activeTab ? "border-b-2 border-neutral-800" : ""
+              } cursor-pointer`}
+            >
+              {tab}
+            </div>
+          ))}
+        </div>
+        <button>logout</button>
+      </div>
+
       <div className="py-4 px-4 flex justify-end">
+        {/* <Tabs/> */}
+
         <button className="bg-fuchsia-800 text-white px-6 py-3 rounded-full uppercase text-sm font-medium">
           Add task
         </button>
@@ -31,7 +55,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="px-4 w-full py-6 relative">
+      <div className="px-4 w-full lg:w-[300px] py-6 relative">
         <input
           placeholder="search"
           className="border-[1.5px] border-neutral-300 rounded-full py-3 px-11 w-full"
