@@ -1,37 +1,39 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-// export interface singleProduct {
-//   id: number;
-//   productImage: string;
-//   productName: string;
-//   productDescription: string;
-//   productPrice: number;
-//   totalPrice: number;
-//   quantity: number;
-// }
+export interface iTodo {
+  id: number;
+  taskName: string;
+  taskDescription: string;
+  dueDate: Date;
+  taskCategory: 'work'|'personal';
+  taskStatus: 'todo'|'inprogress'|'completed';
+  historyActivity: Array<string>;
+  attachment: any;
+}
 
 // Define a type for the slice state
-export interface productState {
-//   products: Array<singleProduct>;
-  counter: number
+export interface todoState {
+  tasks: Array<iTodo>;
 }
 
 // Define the initial state using that type
 const initialState = {
-//   products: [],
-  counter: 0
-} as productState;
+  tasks: [],
+} as todoState;
 
 export const todoSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    increaseCounter: (state) => {
-        state.counter++
+    addTodo(state, action: PayloadAction<iTodo>) {
+      state.tasks.push(action.payload)
     },
-    decreaseCounter: (state) => {
-        state.counter--
+    markMultiple(state, action: PayloadAction<Array<iTodo>>) {
+
     },
+    deleteMultiple(state, action: PayloadAction<Array<iTodo>>) {
+
+    }
     // addproduct: (state, action: PayloadAction<singleProduct>) => {
     //   const isProductExist = state.products.find(
     //     (product) => product.id === action.payload.id
@@ -44,8 +46,7 @@ export const todoSlice = createSlice({
 });
 
 export const {
-    increaseCounter,
-    decreaseCounter,
+    addTodo
 } = todoSlice.actions;
 
 export default todoSlice.reducer;
