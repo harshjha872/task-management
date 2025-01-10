@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CircleX } from "lucide-react";
 import { iTodo } from "@/store/todoSlice";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Calendar } from "lucide-react";
 
 const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
   const [newTodo, setNewTodo] = useState<iTodo | null>(null);
@@ -117,18 +117,22 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
             {/* Date */}
             <div>
               <div className="text-sm text-neutral-500 mb-2">Due date*</div>
+              <div className="relative">
               <input
                 required
                 className="border border-neutral-300 placeholder:text-neutral-500 rounded-lg bg-neutral-50 w-full px-3 py-1.5 placeholder:text-sm"
                 placeholder="DD/MM/YYYY"
               />
+              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5"/>
+
+              </div>
             </div>
 
             {/* Status */}
             <div>
               <div className="text-sm text-neutral-500 mb-2">Task status*</div>
               <div className="grid">
-                <ChevronDown className="pointer-events-none z-10 right-[.5rem] text-neutral-500 relative col-start-1 row-start-1 h-4 w-4 self-center justify-self-end forced-colors:hidden" />
+                <ChevronDown className="pointer-events-none z-10 right-[.5rem] text-neutral-700 relative col-start-1 row-start-1 h-4 w-4 self-center justify-self-end forced-colors:hidden" />
                 <select
                   id="countries"
                   className="row-start-1 col-start-1 bg-neutral-50 border border-neutral-300 text-neutral-500 text-sm rounded-lg focus:ring-neutral-300 focus:border-neutral-300 block w-full p-[.58rem] pr-[2.5rem] appearance-none placeholder:text-sm"

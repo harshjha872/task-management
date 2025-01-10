@@ -13,7 +13,8 @@ import {
 import Navbar from "@/components/navbar/navbar";
 import Accordian from "@/components/accordian/accordian";
 import Addtaskmodal from "@/components/modals/addtaskmodal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context/authcontext";
 
 const Tabss = [
   { name: "List", icon: <List size={18} /> },
@@ -21,9 +22,11 @@ const Tabss = [
 ];
 
 export default function Home() {
+  const { user } = useAuth() as any;
+
   const closeModal = () => {
     setShowAddTaskModal(false);
-  }
+  };
   // const dispatch = useAppDispatch()
   // const counter = useAppSelector((state) => state.todoSlice.counter);
   const [activeTab, setActiveTab] = useState(0);
@@ -48,10 +51,12 @@ export default function Home() {
             </div>
           ))}
         </div>
-        <button className="flex items-center rounded-lg border border-pink-300 bg-pink-50 px-3 py-2">
-          <LogOut size={20} className="mr-1" />
-          logout
-        </button>
+        {user && (
+          <button className="flex items-center rounded-lg border border-pink-300 bg-pink-50 px-3 py-2">
+            <LogOut size={20} className="mr-1" />
+            logout
+          </button>
+        )}
       </div>
 
       {/* Add task btn for mobile */}
@@ -114,9 +119,8 @@ export default function Home() {
         <Accordian title="Completed" Tasks={[]} header_color="bg-green-200" />
       </div>
 
-      {showAddTaskModal && (
-        <Addtaskmodal closeModal={closeModal}/>
-      )}
+      {/* Add task modal */}
+      {showAddTaskModal && <Addtaskmodal closeModal={closeModal} />}
     </div>
   );
 }
