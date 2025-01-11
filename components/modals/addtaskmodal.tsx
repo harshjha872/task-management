@@ -2,9 +2,23 @@ import React, { useState } from "react";
 import { CircleX } from "lucide-react";
 import { iTodo } from "@/store/todoSlice";
 import { ChevronDown, Calendar } from "lucide-react";
+import DatePicker from "react-datepicker";
+
+import "react-datepicker/dist/react-datepicker.css";
 
 const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
   const [newTodo, setNewTodo] = useState<iTodo | null>(null);
+
+  const handleSetDate = (date: any) => {
+    console.log(date)
+    setNewTodo(
+      (pre) =>
+        ({
+          ...pre,
+          dueDate: date,
+        } as iTodo)
+    );
+  }
 
   const handleSelectCategory = (selectedCategory: string) => {
     setNewTodo(
@@ -118,11 +132,12 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
             <div>
               <div className="text-sm text-neutral-500 mb-2">Due date*</div>
               <div className="relative">
-              <input
+              <DatePicker wrapperClassName="datePicker" selected={newTodo?.dueDate} placeholderText="DD/MM/YYYY" onChange={handleSetDate} />
+              {/* <input
                 required
                 className="border border-neutral-300 placeholder:text-neutral-500 rounded-lg bg-neutral-50 w-full px-3 py-1.5 placeholder:text-sm"
                 placeholder="DD/MM/YYYY"
-              />
+              /> */}
               <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5"/>
 
               </div>

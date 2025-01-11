@@ -8,7 +8,7 @@ export interface iTodo {
   taskCategory: 'work'|'personal';
   taskStatus: 'todo'|'inprogress'|'completed';
   historyActivity: Array<string>;
-  attachment: any;
+  attachment?: any;
 }
 
 // Define a type for the slice state
