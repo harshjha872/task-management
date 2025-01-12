@@ -2,7 +2,7 @@
 import Image from "next/image";
 import React from "react";
 import { NotepadText } from "lucide-react";
-import { useAuth } from "@/lib/auth-context/authcontext";
+import { useAuth } from "@/lib/auth-context/auth-context";
 
 const Navbar = () => {
   const { user } = useAuth() as any;
@@ -13,16 +13,16 @@ const Navbar = () => {
         <span className="text-lg">TaskBuddy</span>
       </div>
       <div className="flex space-x-2 items-center">
-        <div className="relative h-8 w-8">
-        <Image
+        <div className={`relative h-8 w-8 ${user?.photoURL ? '' : 'bg-gradient-to-bl from-green-500 to-sky-500 rounded-full'}`}>
+        {user?.photoURL && <Image
           alt="userimage"
           className="rounded-full"
           layout="fill"
           src={user?.photoURL}
           objectFit="cover"
-        />
+        />}
         </div>
-        <div className="hidden md:block">{user?.displayName}</div>
+        <div className="hidden md:block">{user?.displayName ?? 'Guest'}</div>
       </div>
     </div>
   );

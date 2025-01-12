@@ -2,6 +2,7 @@
 
 // import { useAppSelector, useAppDispatch } from "./hooks";
 // import { increaseCounter, decreaseCounter } from "@/store/todoSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   ChevronDown,
   Search,
@@ -11,10 +12,11 @@ import {
   CircleX,
 } from "lucide-react";
 import Navbar from "@/components/navbar/navbar";
-import Accordian from "@/components/accordian/accordian";
 import Addtaskmodal from "@/components/modals/addtaskmodal";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth-context/authcontext";
+import { useAuth } from "@/lib/auth-context/auth-context";
+import { Todo } from "@/lib/Todo/Todo";
+import TaskCategoryPanel from "@/components/task-category-panel/task-category-panel";
 
 const Tabss = [
   { name: "List", icon: <List size={18} /> },
@@ -31,6 +33,12 @@ export default function Home() {
   // const counter = useAppSelector((state) => state.todoSlice.counter);
   const [activeTab, setActiveTab] = useState(0);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const tasks = useAppSelector((state) => state.todoSlice.tasks);
+
+  const getTasksOnBasisOf = (taskStatus: "todo" | "inprogress" | "completed") => tasks.filter((task:Todo) => task.taskStatus === taskStatus);
+  
+  console.log(tasks);
+  
   return (
     <div className="">
       <Navbar />
@@ -114,9 +122,9 @@ export default function Home() {
       </div>
 
       <div className="px-4 space-y-4 flex flex-col items-center justify-center lg:justify-start lg:items-start">
-        <Accordian title="Todo" Tasks={[]} header_color="bg-pink-200" />
-        <Accordian title="In-progress" Tasks={[]} header_color="bg-sky-200" />
-        <Accordian title="Completed" Tasks={[]} header_color="bg-green-200" />
+        <TaskCategoryPanel title="Todo" Tasks={getTasksOnBasisOf('todo')} header_color="bg-pink-200" />
+        <TaskCategoryPanel title="In-progress" Tasks={getTasksOnBasisOf('inprogress')} header_color="bg-sky-200" />
+        <TaskCategoryPanel title="Completed" Tasks={getTasksOnBasisOf('completed')} header_color="bg-green-200" />
       </div>
 
       {/* Add task modal */}

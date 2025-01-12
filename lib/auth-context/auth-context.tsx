@@ -9,14 +9,15 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
 
-const AuthContext = createContext();
+//@ts-ignore
+const AuthContext = createContext()
 
 export function AuthProvider({ children }: {children: any}) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user:any) => {
       setUser(user);
       setLoading(false);
     });

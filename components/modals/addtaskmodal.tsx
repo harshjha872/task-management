@@ -1,16 +1,24 @@
 import React, { useState } from "react";
 import { CircleX } from "lucide-react";
-import { iTodo } from "@/store/todoSlice";
 import { ChevronDown, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
-
+import { addTodo } from "@/store/todoSlice";
+import { useAppDispatch } from "@/store/hooks";
 import "react-datepicker/dist/react-datepicker.css";
+import { Todo, iTodo } from "@/lib/Todo/Todo";
+import Form from "next/form";
 
 const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
   const [newTodo, setNewTodo] = useState<iTodo | null>(null);
 
+  const dispatch = useAppDispatch();
+
+  const closeAndResetForm = () => {
+    closeModal();
+    setNewTodo(null);
+  };
+
   const handleSetDate = (date: any) => {
-    console.log(date)
     setNewTodo(
       (pre) =>
         ({
@@ -18,7 +26,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
           dueDate: date,
         } as iTodo)
     );
-  }
+  };
 
   const handleSelectCategory = (selectedCategory: string) => {
     setNewTodo(
@@ -49,7 +57,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
         } as iTodo)
     );
   };
-  
+
   const handleStatusChange = (e: any) => {
     setNewTodo(
       (pre) =>
@@ -60,7 +68,26 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
     );
   };
 
+  const handleAddTodo = () => {
+    if (newTodo) {
+      const newTodoObj = new Todo(newTodo);
+      dispatch(addTodo(JSON.parse(JSON.stringify(newTodoObj))));
+    }
+
+    closeAndResetForm();
+  };
+
   console.log(newTodo);
+
+  const handleFormSubmit = () => {
+    console.log("submit");
+    if (newTodo) {
+      const newTodoObj = new Todo(newTodo);
+      dispatch(addTodo(JSON.parse(JSON.stringify(newTodoObj))));
+    }
+
+    closeAndResetForm();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -68,7 +95,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
         <div className="flex justify-between items-center border-b py-5 px-4">
           <h2 className="text-xl">Create task</h2>
           <button
-            onClick={() => closeModal()}
+            onClick={() => closeAndResetForm()}
             className="text-gray-400 hover:text-gray-600"
           >
             <CircleX />
@@ -132,14 +159,18 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
             <div>
               <div className="text-sm text-neutral-500 mb-2">Due date*</div>
               <div className="relative">
-              <DatePicker wrapperClassName="datePicker" selected={newTodo?.dueDate} placeholderText="DD/MM/YYYY" onChange={handleSetDate} />
-              {/* <input
+                <DatePicker
+                  wrapperClassName="datePicker"
+                  selected={newTodo?.dueDate}
+                  placeholderText="DD/MM/YYYY"
+                  onChange={handleSetDate}
+                />
+                {/* <input
                 required
                 className="border border-neutral-300 placeholder:text-neutral-500 rounded-lg bg-neutral-50 w-full px-3 py-1.5 placeholder:text-sm"
                 placeholder="DD/MM/YYYY"
               /> */}
-              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5"/>
-
+                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5" />
               </div>
             </div>
 
@@ -175,12 +206,16 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
         </div>
         <div className="px-4 py-4 rounded-2xl rounded-tl-none rounded-tr-none flex justify-end space-x-2 bg-neutral-100 border-t border-neutral-300">
           <button
-            onClick={() => closeModal()}
+            onClick={() => closeAndResetForm()}
             className="text-sm px-4 py-1 uppercase rounded-full border border-neutral-300 bg-white"
           >
             cancel
           </button>
-          <button className="text-sm px-4 py-1 uppercase bg-fuchsia-600 text-white rounded-full">
+          <button
+            onClick={handleAddTodo}
+            type="submit"
+            className="text-sm px-4 py-1 uppercase bg-fuchsia-600 text-white rounded-full"
+          >
             create
           </button>
         </div>

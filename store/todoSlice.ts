@@ -1,19 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-export interface iTodo {
-  id: number;
-  taskName: string;
-  taskDescription: string;
-  dueDate: Date;
-  taskCategory: 'work'|'personal';
-  taskStatus: 'todo'|'inprogress'|'completed';
-  historyActivity: Array<string>;
-  attachment?: any;
-}
+import { Todo } from "@/lib/Todo/Todo";
+import { iTodo } from "@/lib/Todo/Todo";
 
 // Define a type for the slice state
 export interface todoState {
-  tasks: Array<iTodo>;
+  tasks: Array<Todo>;
 }
 
 // Define the initial state using that type
@@ -22,18 +13,29 @@ const initialState = {
 } as todoState;
 
 export const todoSlice = createSlice({
-  name: "cart",
+  name: "todo",
   initialState,
   reducers: {
-    addTodo(state, action: PayloadAction<iTodo>) {
-      state.tasks.push(action.payload)
+    addTodo(state, action: PayloadAction<Todo>) {
+      state.tasks.push(action.payload);
     },
-    markMultiple(state, action: PayloadAction<Array<iTodo>>) {
-
+    editSingleTodo(state, action: PayloadAction<iTodo>) {
+      const makeObj = new Todo(action.payload)
+      makeObj.updateHistoryActivity(
+        JSON.parse(
+          JSON.stringify(
+            state.tasks.find((task: Todo) => task.id === action.payload.id)
+          )
+        )
+      );
+      state.tasks = state.tasks.map((task: Todo) =>
+        task.id === action.payload.id
+          ? JSON.parse(JSON.stringify(makeObj))
+          : task
+      );
     },
-    deleteMultiple(state, action: PayloadAction<Array<iTodo>>) {
-
-    }
+    markMultiple(state, action: PayloadAction<Array<Todo>>) {},
+    deleteMultiple(state, action: PayloadAction<Array<Todo>>) {},
     // addproduct: (state, action: PayloadAction<singleProduct>) => {
     //   const isProductExist = state.products.find(
     //     (product) => product.id === action.payload.id
@@ -41,12 +43,9 @@ export const todoSlice = createSlice({
     //   if (isProductExist) isProductExist.quantity += 1;
     //   else state.products.push(action.payload);
     // },
-    
   },
 });
 
-export const {
-    addTodo
-} = todoSlice.actions;
+export const { addTodo, editSingleTodo } = todoSlice.actions;
 
 export default todoSlice.reducer;

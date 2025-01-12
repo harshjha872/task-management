@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from "@/lib/auth-context/authcontext";
+import { useAuth } from "@/lib/auth-context/auth-context";
 
 export default function LoginPage() {
   const { loginWithGoogle } = useAuth() as any;
