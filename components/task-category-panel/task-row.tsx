@@ -1,6 +1,6 @@
 import { Todo } from "@/lib/Todo/Todo";
 import moment from "moment";
-import { CircleCheck, Ellipsis } from "lucide-react";
+import { CircleCheck, Ellipsis, GripVertical } from "lucide-react";
 import { useState } from "react";
 import EditTaskModal from "../modals/edittaskmodal";
 import { useSortable } from "@dnd-kit/sortable";
@@ -46,7 +46,8 @@ export default function TaskRow({ todo }: { todo: Todo }) {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </label>
-        <CircleCheck {...listeners} className="w-6 h-6 text-gray-400" />
+        <GripVertical {...listeners} className="w-6 h-6 text-gray-400 hover:cursor-grab  active:cursor-grabbing"/>
+        <CircleCheck className="w-6 h-6 text-gray-400" />
         <span className="text-lg">{todo.taskName}</span>
       </div>
       <div>{getConvertedDueDate(todo.dueDate)}</div>

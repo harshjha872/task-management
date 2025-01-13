@@ -1,5 +1,13 @@
 import moment from "moment";
 import { uid } from "../utils/utils";
+import { firebaseConfig } from "../firebase/firebase";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
+import { v4 as uuidv4 } from 'uuid';
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
 
 export interface iTodo {
   id: string;
@@ -27,7 +35,7 @@ export class Todo {
   updatedAt: Date;
 
   constructor(todo: iTodo) {
-    this.id = todo.id ?? uid();
+    this.id = todo.id ?? uuidv4();
     this.taskName = todo.taskName;
     this.taskDescription = todo.taskDescription ?? null;
     this.dueDate = todo.dueDate;
@@ -65,7 +73,15 @@ export class Todo {
         continue;
       }
 
-      this.appendHistoryActivity(`you updated the ${key} from ${oldValue} to ${newValue}`)
+      if (key === "attachment") {
+        if (oldValue === null)
+          this.appendHistoryActivity(`you uploaded a file`);
+        else this.appendHistoryActivity(`you updated the file to ${newValue}`);
+      } else {
+        this.appendHistoryActivity(
+          `you updated the ${key} from ${oldValue} to ${newValue}`
+        );
+      }
     }
   }
 
@@ -75,5 +91,25 @@ export class Todo {
       at: new Date(),
     });
     this.updatedAt = new Date();
+  }
+
+  async uploadDataToFirebase(email: string) {
+    try {
+      const res = await addDoc(collection(db, email), {
+        id: this.id,
+        taskName: this.taskName,
+        taskDescription: this.taskDescription ?? null,
+        dueDate: this.dueDate,
+        taskCategory: this.taskCategory,
+        taskStatus: this.taskStatus,
+        attachment: this.attachment ?? null,
+        historyActivity: this.historyActivity,
+        createdAt: this.createdAt,
+        updatedAt: this.updatedAt,
+      });
+      console.log(res);
+    } catch (err) {
+      console.log(err);
+    }
   }
 }

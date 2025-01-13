@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { ChevronUp, CircleCheck } from "lucide-react";
 import { Todo } from "@/lib/Todo/Todo";
-import moment from "moment";
-import EditTaskModal from "../modals/edittaskmodal";
-import { Ellipsis } from "lucide-react";
 import TaskRow from "./task-row";
 import { useAppDispatch } from "@/store/hooks";
 import { reorderTasks } from "@/store/todoSlice";
@@ -16,16 +13,10 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-export interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-}
 
 export default function TaskCategoryPanel({
   title,
