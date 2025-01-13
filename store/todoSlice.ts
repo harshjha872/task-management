@@ -1,6 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Todo } from "@/lib/Todo/Todo";
 import { iTodo } from "@/lib/Todo/Todo";
+import {
+  arrayMove,
+} from '@dnd-kit/sortable';
 
 // Define a type for the slice state
 export interface todoState {
@@ -34,18 +37,30 @@ export const todoSlice = createSlice({
           : task
       );
     },
+    reorderTasks(state, action: PayloadAction<{oldIndex: number, newIndex: number}>) {
+      const { oldIndex, newIndex } = action.payload;
+      const movedItem = state.tasks.splice(oldIndex, 1)[0];
+      state.tasks.splice(newIndex, 0, movedItem);
+    },
     markMultiple(state, action: PayloadAction<Array<Todo>>) {},
     deleteMultiple(state, action: PayloadAction<Array<Todo>>) {},
-    // addproduct: (state, action: PayloadAction<singleProduct>) => {
-    //   const isProductExist = state.products.find(
-    //     (product) => product.id === action.payload.id
-    //   );
-    //   if (isProductExist) isProductExist.quantity += 1;
-    //   else state.products.push(action.payload);
-    // },
+    updateTaskStatus: (state, action) => {
+      const { taskId, newStatus } = action.payload;
+      const task = state.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.taskStatus = newStatus;
+      }
+    },
+    reorderTasksKanban: (state, action) => {
+      const { status, oldIndex, newIndex } = action.payload;
+      const tasksInColumn = state.tasks.filter(task => task.taskStatus === status);
+      const reorderedTasks = arrayMove(tasksInColumn, oldIndex, newIndex);
+      const tasksInOtherColumns = state.tasks.filter(task => task.taskStatus !== status);
+      state.tasks = [...tasksInOtherColumns, ...reorderedTasks];
+    }
   },
 });
 
-export const { addTodo, editSingleTodo } = todoSlice.actions;
+export const { addTodo, editSingleTodo, reorderTasks, updateTaskStatus, reorderTasksKanban } = todoSlice.actions;
 
 export default todoSlice.reducer;

@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context/auth-context";
 export default function LoginPage() {
   const { loginWithGoogle } = useAuth() as any;
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e:any) => {
     e.preventDefault();
     try {
       await loginWithGoogle()

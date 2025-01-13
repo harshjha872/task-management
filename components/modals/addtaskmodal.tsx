@@ -7,6 +7,7 @@ import { useAppDispatch } from "@/store/hooks";
 import "react-datepicker/dist/react-datepicker.css";
 import { Todo, iTodo } from "@/lib/Todo/Todo";
 import Form from "next/form";
+import { supabase } from "@/lib/supabase/supabase";
 
 const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
   const [newTodo, setNewTodo] = useState<iTodo | null>(null);
@@ -17,6 +18,14 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
     closeModal();
     setNewTodo(null);
   };
+
+  const [fileUpload, setFileUpload] = useState(null as any)
+
+  async function handleFileInputChange(e: any) {
+    const file = e.target.files[0]
+    if(!file) return
+    setFileUpload(file)
+  }
 
   const handleSetDate = (date: any) => {
     setNewTodo(
@@ -68,12 +77,23 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
     );
   };
 
-  const handleAddTodo = () => {
+  const handleAddTodo = async () => {
     if (newTodo) {
       const newTodoObj = new Todo(newTodo);
       dispatch(addTodo(JSON.parse(JSON.stringify(newTodoObj))));
     }
 
+    // const { data, error } = await supabase.storage
+    // .from('taskdocs')
+    // .upload('test_file_1', fileUpload);
+
+    // data
+    // Object
+    //   fullPath: "taskdocs/test_file_1"
+    //   id: "1ef5c89e-bbdd-415e-85e8-349a09a0cad7"
+    //   path: "test_file_1"
+
+    // console.log(data, error)
     closeAndResetForm();
   };
 
@@ -196,12 +216,13 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
           {/* Attachments */}
           <div className="mb-40">
             <div className="text-sm text-neutral-500 mb-2">Attachment</div>
-            <div className="w-full border border-neutral-300 text-neutral-500 rounded-lg bg-neutral-50 px-3 py-2 flex justify-center">
+            <label htmlFor="fileUploadAttachment" className="w-full border border-neutral-300 text-neutral-500 rounded-lg bg-neutral-50 px-3 py-2 flex justify-center cursor-pointer">
               <span>
                 Drop your files here or{" "}
-                <span className="text-indigo-500 underline">Update</span>
+                <span className="text-indigo-600 underline hover:text-indigo-500">Upload</span>
               </span>
-            </div>
+            </label>
+            <input className="hidden" id="fileUploadAttachment" type="file" onChange={handleFileInputChange} />
           </div>
         </div>
         <div className="px-4 py-4 rounded-2xl rounded-tl-none rounded-tr-none flex justify-end space-x-2 bg-neutral-100 border-t border-neutral-300">

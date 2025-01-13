@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context/auth-context";
 import { Todo } from "@/lib/Todo/Todo";
 import TaskCategoryPanel from "@/components/task-category-panel/task-category-panel";
+import Link from "next/link";
 
 const Tabss = [
   { name: "List", icon: <List size={18} /> },
@@ -37,15 +38,14 @@ export default function Home() {
 
   const getTasksOnBasisOf = (taskStatus: "todo" | "inprogress" | "completed") => tasks.filter((task:Todo) => task.taskStatus === taskStatus);
   
-  console.log(tasks);
-  
   return (
     <div className="">
       <Navbar />
       <div className="hidden lg:flex px-4 my-3 justify-between items-center">
         <div className="flex space-x-2">
           {Tabss.map((tab, index) => (
-            <div
+            <Link
+              href="/kanbantest"
               onClick={() => setActiveTab(index)}
               key={index * 99}
               className={`${
@@ -56,7 +56,7 @@ export default function Home() {
             >
               <div className="mr-1">{tab.icon}</div>
               <div>{tab.name}</div>
-            </div>
+            </Link>
           ))}
         </div>
         {user && (
