@@ -1,7 +1,7 @@
 import { Todo } from "@/lib/Todo/Todo";
 import moment from "moment";
 import { Plus, Calendar, CornerDownLeft } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import CustomMenu from "../dropdown/dropdown";
 import { useAuth } from "@/lib/auth-context/auth-context";
 import Form from "next/form";
@@ -17,8 +17,9 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
   const { user } = useAuth() as any;
   const [errors, setErrors] = useState<Partial<TaskFormData>>({});
 
+  console.log(errors)
   const dispatch = useAppDispatch();
-  const validateForm = (data: TaskFormData) => {
+  const validateForm = () => {
     try {
       taskSchema.parse({ ...newTodo, dueDate: newTodo?.dueDate.toString() });
       setErrors({});
@@ -36,9 +37,8 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
     setNewTodo(null);
   };
 
-  const submitAddTaskFromMiniForm = async (formData: FormData) => {
-    const data = Object.fromEntries(formData) as unknown as TaskFormData;
-    if (validateForm(data)) {
+  const submitAddTaskFromMiniForm = async () => {
+    if (validateForm()) {
       if (newTodo) {
         const newTodoObj = new Todo(newTodo);
         if (user) {

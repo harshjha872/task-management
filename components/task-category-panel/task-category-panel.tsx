@@ -3,7 +3,6 @@ import {
   ChevronUp,
   Plus,
 } from "lucide-react";
-import { Todo } from "@/lib/Todo/Todo";
 import TaskRow from "./task-row";
 import { useAppDispatch } from "@/store/hooks";
 import { reorderTasks } from "@/store/todoSlice";

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CircleX, X } from "lucide-react";
+import { X } from "lucide-react";
 import { ChevronDown, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
 import { useAppDispatch } from "@/store/hooks";
@@ -449,7 +449,7 @@ export default function EditTaskModal({
                 </div>
               ) : (editTodo?.attachmentUrl && <div className="flex px-4 py-2 mt-2 border rounded-lg justify-between">
                 {editTodo.attachment}
-                <X onClick={() => {removeCurrentAttachment}}/>
+                <X onClick={removeCurrentAttachment}/>
                 </div>)}
             </div>
           </div>

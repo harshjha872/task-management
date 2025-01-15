@@ -107,6 +107,7 @@ export class Todo {
         }
       } else if(key == 'dueDate') {
         this.appendHistoryActivity(
+          //@ts-ignore
           `you updated the ${key} from ${moment(new Date(oldValue)).format("D MMM, YYYY") } to ${moment(new Date(newValue)).format("D MMM, YYYY")}`
         );
       } else if(key == 'taskDescription') {
@@ -139,7 +140,7 @@ export class Todo {
     taskId: string;
   }) {
     try {
-      const { data, error } = await supabase.storage
+      await supabase.storage
         .from("taskdocs")
         .remove([`${email}/${taskId}/${fileName}`]);
     } catch (err) {
@@ -159,7 +160,7 @@ export class Todo {
     taskId: string;
   }) {
     try {
-      const { data, error } = await supabase.storage
+       await supabase.storage
         .from("taskdocs")
         .upload(`${email}/${taskId}/${fileName}`, file);
 
@@ -175,7 +176,7 @@ export class Todo {
   public static async getTasksFromFireStore(email: string) {
     const q = query(collection(db, email));
     const querySnapshot = await getDocs(q);
-    let allTasks = [] as Array<any>;
+    const allTasks = [] as Array<any>;
     querySnapshot.forEach((doc) => {
       console.log(doc.data());
       const historyActivity = doc.data().historyActivity.map((obj: any) => ({

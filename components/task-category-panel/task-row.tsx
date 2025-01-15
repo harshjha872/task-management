@@ -7,7 +7,7 @@ import {
   Trash2,
   PencilLine,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import EditTaskModal from "../modals/edittaskmodal";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -16,13 +16,6 @@ import { useAuth } from "@/lib/auth-context/auth-context";
 import { deleteTask, updateStatusSingleInStore } from "@/store/todoSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { iTodo } from "@/lib/Todo/Todo";
-
-const options = [
-  {
-    name: "edit",
-  },
-  { name: "delete" },
-];
 
 export default function TaskRow({
   todo,

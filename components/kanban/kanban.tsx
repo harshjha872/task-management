@@ -9,18 +9,16 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  MouseSensor,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useAppSelector } from "@/store/hooks";
 import {
   reorderTasksKanban,
-  updateTaskStatus,
   deleteTask,
 } from "@/store/todoSlice";
 import { iTodo } from "@/lib/Todo/Todo";

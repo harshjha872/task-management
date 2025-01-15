@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CustomMenu({ items, children, background = 'pink', position = 'bottom' }) {
+export default function CustomMenu({ items, children, background = 'pink', position = 'bottom' }: { items: Array<any>, children: any, background?: string, position?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event:any) => {
-      if (menuRef.current && 
-          !menuRef.current.contains(event.target) && 
-          !triggerRef.current.contains(event.target)) {
+      // @ts-ignore
+      if (menuRef.current && !menuRef.current.contains(event.target) && !triggerRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };

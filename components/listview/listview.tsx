@@ -67,8 +67,8 @@ export default function ListView({
 
   const handleSortingOnDueDate = () => {
     const sortedTasks = [...tasks].sort((a, b) => {
-      const dateA = new Date(a.dueDate);
-      const dateB = new Date(b.dueDate);
+      const dateA = new Date(a.dueDate) as any;
+      const dateB = new Date(b.dueDate) as any;
       return sorting === "asc" ? dateA - dateB : dateB - dateA;
     });
 

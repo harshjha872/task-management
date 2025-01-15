@@ -7,17 +7,13 @@ import {
   List,
   SquareKanban,
   LogOut,
-  CircleX,
   X,
-  ArrowUpDown,
 } from "lucide-react";
 import Navbar from "@/components/navbar/navbar";
 import Addtaskmodal from "@/components/modals/addtaskmodal";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context/auth-context";
 import { Todo } from "@/lib/Todo/Todo";
-import TaskCategoryPanel from "@/components/task-category-panel/task-category-panel";
-import Link from "next/link";
 import { setTasksFromDb } from "@/store/todoSlice";
 import CustomMenu from "@/components/dropdown/dropdown";
 import DatePicker from "react-datepicker";
@@ -31,8 +27,6 @@ const Tabss = [
   { name: "List", icon: <List size={18} /> },
   { name: "Board", icon: <SquareKanban size={18} /> },
 ];
-
-let totalTaskInDb: any;
 
 export default function Home() {
   const { user, logout } = useAuth() as any;
@@ -52,7 +46,6 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       const allTasks = await Todo.getTasksFromFireStore(user?.email);
-      totalTaskInDb = allTasks.length;
       dispatch(setTasksFromDb(JSON.parse(JSON.stringify(allTasks))));
     })();
   }, []);

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CircleX, X } from "lucide-react";
+import { X } from "lucide-react";
 import { ChevronDown, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
 import { addTodo } from "@/store/todoSlice";
