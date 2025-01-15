@@ -1,7 +1,5 @@
 "use client";
 
-// import { useAppSelector, useAppDispatch } from "./hooks";
-// import { increaseCounter, decreaseCounter } from "@/store/todoSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   ChevronDown,
@@ -10,6 +8,8 @@ import {
   SquareKanban,
   LogOut,
   CircleX,
+  X,
+  ArrowUpDown,
 } from "lucide-react";
 import Navbar from "@/components/navbar/navbar";
 import Addtaskmodal from "@/components/modals/addtaskmodal";
@@ -18,6 +18,14 @@ import { useAuth } from "@/lib/auth-context/auth-context";
 import { Todo } from "@/lib/Todo/Todo";
 import TaskCategoryPanel from "@/components/task-category-panel/task-category-panel";
 import Link from "next/link";
+import { setTasksFromDb } from "@/store/todoSlice";
+import CustomMenu from "@/components/dropdown/dropdown";
+import DatePicker from "react-datepicker";
+import { isDateInRange } from "@/lib/utils/utils";
+import moment from "moment";
+import KanbanBoard from "@/components/kanban/kanban";
+import ListView from "@/components/listview/listview";
+import { useRouter } from "next/navigation";
 
 const Tabss = [
   { name: "List", icon: <List size={18} /> },
@@ -25,27 +33,111 @@ const Tabss = [
 ];
 
 export default function Home() {
-  const { user } = useAuth() as any;
+  const { user, logout } = useAuth() as any;
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    (async () => {
+      const allTasks = await Todo.getTasksFromFireStore(user?.email);
+      console.log(allTasks);
+      dispatch(setTasksFromDb(JSON.parse(JSON.stringify(allTasks))));
+    })();
+  }, []);
 
   const closeModal = () => {
     setShowAddTaskModal(false);
   };
-  // const dispatch = useAppDispatch()
-  // const counter = useAppSelector((state) => state.todoSlice.counter);
+
   const [activeTab, setActiveTab] = useState(0);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const tasks = useAppSelector((state) => state.todoSlice.tasks);
 
-  const getTasksOnBasisOf = (taskStatus: "todo" | "inprogress" | "completed") => tasks.filter((task:Todo) => task.taskStatus === taskStatus);
-  
+  const onChangeDateRange = (dates: any) => {
+    const [start, end] = dates;
+    setActiveFilters((pre) => {
+      return {
+        ...pre,
+        dueDate: [start, end],
+      } as filters;
+    });
+  };
+
+  const filterCategory = [
+    {
+      label: "WORK",
+      onClick: () => handlefilterCategory("work"),
+    },
+    {
+      label: "PERSONAL",
+      onClick: () => handlefilterCategory("personal"),
+    },
+  ];
+
+  interface filters {
+    taskCategory?: "work" | "personal" | null;
+    dueDate?: [Date, Date] | null;
+  }
+
+  const [activeFilters, setActiveFilters] = useState<filters | null>(null);
+
+  const handlefilterCategory = (category: string) => {
+    setActiveFilters((pre) => {
+      return {
+        ...pre,
+        taskCategory: category,
+      } as filters;
+    });
+  };
+
+  const [searchTask, setSearchTasks] = useState("");
+
+  const handleSearchTask = (e: any) => {
+    setSearchTasks(e.target.value);
+  };
+
+  const getTasksOnBasisOf = (taskStatus: string) => {
+    const filteredTasks = tasks.filter(
+      (task) => task.taskStatus === taskStatus
+    );
+    return filteredTasks.filter((tasks) => {
+      const matchSearch = tasks.taskName
+        .toLowerCase()
+        .includes(searchTask.toLowerCase());
+
+      const matchesCategory =
+        activeFilters?.taskCategory === undefined ||
+        activeFilters?.taskCategory === null ||
+        tasks.taskCategory === activeFilters?.taskCategory;
+
+      const matchesDueDate =
+        activeFilters?.dueDate === null ||
+        activeFilters?.dueDate === undefined ||
+        isDateInRange(
+          tasks.dueDate,
+          activeFilters?.dueDate[0],
+          activeFilters?.dueDate[1]
+        );
+
+      return matchesCategory && matchesDueDate && matchSearch;
+    });
+  };
+
   return (
-    <div className="">
+    <div className="flex flex-col h-screen">
       <Navbar />
       <div className="hidden lg:flex px-4 my-3 justify-between items-center">
         <div className="flex space-x-2">
           {Tabss.map((tab, index) => (
-            <Link
-              href="/kanbantest"
+            <div
               onClick={() => setActiveTab(index)}
               key={index * 99}
               className={`${
@@ -56,11 +148,17 @@ export default function Home() {
             >
               <div className="mr-1">{tab.icon}</div>
               <div>{tab.name}</div>
-            </Link>
+            </div>
           ))}
         </div>
         {user && (
-          <button className="flex items-center rounded-lg border border-pink-300 bg-pink-50 px-3 py-2">
+          <button
+            onClick={async () => {
+              await logout();
+              router.push("/login");
+            }}
+            className="flex items-center rounded-lg border border-pink-300 bg-pink-50 px-3 py-2"
+          >
             <LogOut size={20} className="mr-1" />
             logout
           </button>
@@ -77,24 +175,72 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between lg:mx-4 lg:mb-3 lg:border-b-[1.5px] lg:border-neutral-200">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between lg:mx-4 lg:border-neutral-200">
         <div className="flex flex-col lg:flex-row px-4 lg:px-0 lg:items-center">
           <div className="text-neutral-500 mb-2 mr-2">Filter by:</div>
           <div className="flex space-x-2">
-            <div className="flex space-x-2 items-center px-4 py-2 border border-neutral-400 shadow-sm rounded-full text-neutral-600">
-              <span>Category</span>
-              <ChevronDown size={15} />
-            </div>
-            <div className="flex space-x-2 items-center px-6 py-2 border border-neutral-400 shadow-sm rounded-full text-neutral-600">
-              <span>Due date</span>
-              <ChevronDown size={15} />
-            </div>
+            {activeFilters?.taskCategory ? (
+              <div className="flex space-x-2 items-center px-4 py-2 border bg-fuchsia-900 text-white border-neutral-400 shadow-sm rounded-full">
+                <span>{activeFilters?.taskCategory}</span>
+                <X
+                  className="cursor-pointer"
+                  onClick={() =>
+                    setActiveFilters((pre) => ({ ...pre, taskCategory: null }))
+                  }
+                  size={15}
+                />
+              </div>
+            ) : (
+              <CustomMenu items={filterCategory}>
+                <div className="flex space-x-2 items-center px-4 py-2 border border-neutral-400 shadow-sm rounded-full text-neutral-600">
+                  <span>Category</span>
+                  <ChevronDown size={15} />
+                </div>
+              </CustomMenu>
+            )}
+
+            {activeFilters?.dueDate &&
+            activeFilters?.dueDate[0] &&
+            activeFilters?.dueDate[1] ? (
+              <div className="flex space-x-2 items-center px-6 py-2 border border-neutral-400 shadow-sm rounded-full text-white bg-fuchsia-800">
+                <span>{`${moment(activeFilters?.dueDate[0]).format(
+                  "D MMM, YYYY"
+                )} - ${moment(activeFilters?.dueDate[1]).format(
+                  "D MMM, YYYY"
+                )}`}</span>
+                <X
+                  size={15}
+                  onClick={() =>
+                    setActiveFilters((pre) => ({ ...pre, dueDate: null }))
+                  }
+                />
+              </div>
+            ) : (
+              <div className="relative">
+                <DatePicker
+                  wrapperClassName="datePickerFilter"
+                  selected={null}
+                  onChange={onChangeDateRange}
+                  placeholderText="Due date"
+                  startDate={
+                    activeFilters?.dueDate ? activeFilters?.dueDate[0] : null
+                  }
+                  endDate={
+                    activeFilters?.dueDate ? activeFilters?.dueDate[1] : null
+                  }
+                  selectsRange
+                />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5" />
+              </div>
+            )}
           </div>
         </div>
 
         <div className="flex items-center">
           <div className="px-4 w-full lg:w-[300px] py-6 relative">
             <input
+              onChange={handleSearchTask}
+              value={searchTask}
               placeholder="search"
               className="border-[1.5px] border-neutral-300 rounded-full py-3 px-11 w-full"
               type="text"
@@ -114,17 +260,12 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="hidden lg:grid grid-cols-5 px-6 font-medium text-sm text-neutral-500 my-2">
-        <div className="col-span-2">Task name</div>
-        <div>Due on</div>
-        <div>Task status</div>
-        <div>Task Category</div>
-      </div>
-
-      <div className="px-4 space-y-4 flex flex-col items-center justify-center lg:justify-start lg:items-start">
-        <TaskCategoryPanel title="Todo" Tasks={getTasksOnBasisOf('todo')} header_color="bg-pink-200" />
-        <TaskCategoryPanel title="In-progress" Tasks={getTasksOnBasisOf('inprogress')} header_color="bg-sky-200" />
-        <TaskCategoryPanel title="Completed" Tasks={getTasksOnBasisOf('completed')} header_color="bg-green-200" />
+      <div className={`${activeFilters !== null ? "" : "flex-1"}`}>
+        {activeTab === 0 ? (
+          <ListView getTasksOnBasisOf={getTasksOnBasisOf} />
+        ) : (
+          <KanbanBoard getTasksOnBasisOf={getTasksOnBasisOf} />
+        )}
       </div>
 
       {/* Add task modal */}

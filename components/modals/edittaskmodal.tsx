@@ -1,24 +1,74 @@
-import React, { useState } from "react";
-import { CircleX } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { CircleX, X } from "lucide-react";
 import { ChevronDown, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
 import { useAppDispatch } from "@/store/hooks";
 import "react-datepicker/dist/react-datepicker.css";
 import { Todo, iTodo } from "@/lib/Todo/Todo";
 import Form from "next/form";
-import { editSingleTodo } from "@/store/todoSlice";
 import moment from "moment";
+import { useAuth } from "@/lib/auth-context/auth-context";
+import { TaskFormData, taskSchema } from "@/lib/utils/schema";
+import { z } from "zod";
+import { removeSpaceFromFileName } from "@/lib/utils/utils";
+import { editSingleTodo } from "@/store/todoSlice";
 
 export default function EditTaskModal({
   closeModal,
   currentTodo,
 }: {
   closeModal: () => void;
-  currentTodo: Todo;
+  currentTodo: iTodo;
 }) {
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  const [fileUpload, setFileUpload] = useState<{
+    fileName: string;
+    file: File;
+  } | null>(null);
+
+  const [errors, setErrors] = useState<Partial<TaskFormData>>({});
+
   const [editTodo, setEditTodo] = useState<iTodo>(
     JSON.parse(JSON.stringify(currentTodo))
   );
+  const [imagePreview, setImagePreview] = useState(null as any);
+  const [activeTab, setActiveTab] = useState<"details" | "activity">("details");
+
+  const { user } = useAuth() as any;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const validateForm = (data: TaskFormData) => {
+    try {
+      taskSchema.parse(data);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setErrors(error.flatten().fieldErrors as Partial<TaskFormData>);
+      }
+      return false;
+    }
+  };
+
+  const handleTabChange = (e: any) => {
+    setActiveTab(e.target.value);
+  };
 
   const dispatch = useAppDispatch();
 
@@ -32,12 +82,12 @@ export default function EditTaskModal({
     );
   };
 
-  const handleSelectCategory = (selectedCategory: string) => {
+  const handleSelectCategory = (e: any) => {
     setEditTodo(
       (pre) =>
         ({
           ...pre,
-          taskCategory: selectedCategory,
+          taskCategory: e.target.value,
         } as iTodo)
     );
   };
@@ -72,10 +122,20 @@ export default function EditTaskModal({
     );
   };
 
-  const handleEditTodo = () => {
-    const editedObj = new Todo(editTodo);
-    dispatch(editSingleTodo(JSON.parse(JSON.stringify(editedObj))));
-    closeAndResetForm()
+  const handleEditTodo = async (formData: FormData) => {
+    const data = Object.fromEntries(formData) as unknown as TaskFormData;
+    if (validateForm(data)) {
+      const editedObj = new Todo(editTodo);
+      if (user) {
+        try {
+          await editedObj.updateTaskToFirebase(user.email, currentTodo, fileUpload ?? undefined);
+        } catch(err) {
+          console.log(err)
+        }
+        dispatch(editSingleTodo(JSON.parse(JSON.stringify(editedObj))));
+      }
+      closeAndResetForm();
+    }
   };
 
   console.log(editTodo);
@@ -92,31 +152,113 @@ export default function EditTaskModal({
 
   const closeAndResetForm = () => {
     closeModal();
+    removeImagePreview();
+  };
+
+  async function handleFileInputChange(e: any) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    removeCurrentAttachment()
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setImagePreview(reader.result);
+    };
+
+    reader.readAsDataURL(file);
+
+    setFileUpload({ file: file, fileName: removeSpaceFromFileName(file.name) });
+  }
+
+  const removeCurrentAttachment = () => {
+    setEditTodo(
+      (pre) =>
+        ({
+          ...pre,
+          attachment: null,
+          attachmentUrl: null,
+        } as iTodo)
+    );
+  };
+
+  const removeImagePreview = () => {
+    setImagePreview(null);
+    setFileUpload(null);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-2xl shadow-lg w-[70rem]">
-        <div className="flex justify-between items-center border-b py-5 px-4">
+    <Form
+      action={handleEditTodo}
+      className="fixed inset-0 z-50 flex lg:items-center items-end justify-center bg-black bg-opacity-50"
+    >
+      <div
+        className={`bg-white relative rounded-2xl shadow-lg lg:w-[70rem] rounded-br-none rounded-bl-none rounded-tr-2xl rounded-tl-2xl lg:rounded-2xl ${
+          activeTab === "activity" && windowSize.width < 1024 ? "h-[700px]" : ""
+        } overflow-auto max-h-[680px] lg:h-auto w-full`}
+      >
+        <div className="flex flex-none justify-between items-center border-b py-5 px-4">
           <h2 className="text-xl">Edit task</h2>
           <button
             onClick={() => closeAndResetForm()}
             className="text-gray-400 hover:text-gray-600"
           >
-            <CircleX />
+            <X />
           </button>
         </div>
-        <div className="grid grid-cols-5 gap-2">
-          <div className="px-4 py-3 grid gap-3 col-span-3">
+        <div className="flex flex-col flex-1 overflow-auto lg:grid lg:grid-cols-5 gap-2">
+          {/* Details & activity tab */}
+          <div className="flex lg:hidden space-x-2 px-4 pt-3">
+            <label className="cursor-pointer">
+              <input
+                defaultChecked
+                type="radio"
+                name="editTabs"
+                value="details"
+                className="sr-only peer"
+                onChange={handleTabChange}
+              />
+              <div className="px-12 md:px-20 uppercase py-1 text-sm rounded-full font-medium border peer-checked:bg-neutral-900 peer-checked:text-white">
+                details
+              </div>
+            </label>
+            <label className="cursor-pointer">
+              <input
+                type="radio"
+                name="editTabs"
+                value="activity"
+                className="sr-only peer"
+                onChange={handleTabChange}
+              />
+              <div className="px-8 md:px-4 uppercase py-1 text-sm rounded-full font-medium border peer-checked:bg-neutral-900 peer-checked:text-white">
+                Activity
+              </div>
+            </label>
+          </div>
+
+          <div
+            className={`${
+              windowSize.width < 1024
+                ? activeTab === "details"
+                  ? "grid"
+                  : "hidden"
+                : "grid"
+            } px-4 py-3 grid gap-3 col-span-3 w-full`}
+          >
             {/* Task title */}
             <div>
               <input
-                required
+                name="taskName"
                 className="border border-neutral-300 placeholder:text-neutral-500 rounded-lg bg-neutral-50 w-full px-3 py-1.5 placeholder:text-sm"
                 placeholder="Task title"
                 value={editTodo?.taskName || ""}
                 onChange={handleTaskNameChange}
               />
+              {errors.taskName && (
+                <p className="mt-1 text-[.7rem] text-red-600">
+                  {errors.taskName}
+                </p>
+              )}
             </div>
 
             {/* description textarea */}
@@ -130,34 +272,45 @@ export default function EditTaskModal({
             </div>
 
             {/* Category, date and status */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="lg:grid lg:grid-cols-3 flex flex-wrap gap-3">
               {/* Category */}
               <div>
                 <div className="text-sm text-neutral-500 mb-2">
                   Task Catergory*
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleSelectCategory("work")}
-                    className={`px-6 py-2 text-sm rounded-full font-medium border ${
-                      editTodo?.taskCategory === "work"
-                        ? "bg-fuchsia-800 text-white"
-                        : ""
-                    }`}
-                  >
-                    Work
-                  </button>
-                  <button
-                    onClick={() => handleSelectCategory("personal")}
-                    className={`px-6 py-2 text-sm rounded-full font-medium border ${
-                      editTodo?.taskCategory === "personal"
-                        ? "bg-fuchsia-800 text-white"
-                        : ""
-                    }`}
-                  >
-                    Personal
-                  </button>
+                <div className="flex space-x-4">
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="taskCategory"
+                      value="work"
+                      className="sr-only peer"
+                      defaultChecked={editTodo?.taskCategory === "work"}
+                      onChange={handleSelectCategory}
+                    />
+                    <div className="px-6 py-2 text-sm rounded-full font-medium border peer-checked:bg-fuchsia-800 peer-checked:text-white">
+                      Work
+                    </div>
+                  </label>
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="taskCategory"
+                      value="personal"
+                      className="sr-only peer"
+                      defaultChecked={editTodo?.taskCategory === "personal"}
+                      onChange={handleSelectCategory}
+                    />
+                    <div className="px-6 py-2 text-sm rounded-full font-medium border peer-checked:bg-fuchsia-800 peer-checked:text-white">
+                      Personal
+                    </div>
+                  </label>
                 </div>
+                {errors.taskCategory && (
+                  <p className="mt-1 text-[.7rem] text-red-600">
+                    {errors.taskCategory}
+                  </p>
+                )}
               </div>
 
               {/* Date */}
@@ -169,6 +322,7 @@ export default function EditTaskModal({
                     selected={editTodo?.dueDate}
                     placeholderText="DD/MM/YYYY"
                     onChange={handleSetDate}
+                    name="dueDate"
                   />
                   {/* <input
                         required
@@ -177,16 +331,22 @@ export default function EditTaskModal({
                         /> */}
                   <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5" />
                 </div>
+                {errors.dueDate && (
+                  <p className="mt-1 text-[.7rem] text-red-600">
+                    {errors.dueDate}
+                  </p>
+                )}
               </div>
 
               {/* Status */}
-              <div>
+              <div className="w-[220.5px] lg:w-auto">
                 <div className="text-sm text-neutral-500 mb-2">
                   Task status*
                 </div>
                 <div className="grid">
                   <ChevronDown className="pointer-events-none z-10 right-[.5rem] text-neutral-700 relative col-start-1 row-start-1 h-4 w-4 self-center justify-self-end forced-colors:hidden" />
                   <select
+                    name="taskStatus"
                     id="countries"
                     className="row-start-1 col-start-1 bg-neutral-50 border border-neutral-300 text-neutral-500 text-sm rounded-lg focus:ring-neutral-300 focus:border-neutral-300 block w-full p-[.58rem] pr-[2.5rem] appearance-none placeholder:text-sm"
                     onChange={handleStatusChange}
@@ -197,40 +357,122 @@ export default function EditTaskModal({
                     <option value="inprogress">IN-PROGRESS</option>
                     <option value="completed">COMPLETED</option>
                   </select>
+                  {errors.taskStatus && (
+                    <p className="mt-1 text-[.7rem] text-red-600">
+                      {errors.taskStatus}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Attachments */}
-            <div className="mb-40">
+            <div
+              className={`${
+                imagePreview || editTodo?.attachmentUrl !== null
+                  ? ""
+                  : " lg:mb-20 mb-8"
+              }`}
+            >
               <div className="text-sm text-neutral-500 mb-2">Attachment</div>
-              <div className="w-full border border-neutral-300 text-neutral-500 rounded-lg bg-neutral-50 px-3 py-2 flex justify-center">
+              <label
+                htmlFor="fileUploadAttachment"
+                className="w-full border border-neutral-300 text-neutral-500 rounded-lg bg-neutral-50 px-3 py-2 flex justify-center cursor-pointer"
+              >
                 <span>
                   Drop your files here or{" "}
-                  <span className="text-indigo-500 underline">Update</span>
+                  <span className="text-indigo-600 underline hover:text-indigo-500">
+                    Upload
+                  </span>
                 </span>
-              </div>
+              </label>
+              <input
+                className="hidden"
+                id="fileUploadAttachment"
+                type="file"
+                onChange={handleFileInputChange}
+              />
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="mt-4 relative w-fit">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-80 rounded-md shadow-md"
+                  />
+
+                  {/* Remove Button */}
+                  <button
+                    type="button"
+                    className="absolute top-[-0.5rem] right-[-0.5rem] bg-white text-black border rounded-full w-8 h-8 flex items-center justify-center"
+                    onClick={removeImagePreview}
+                  >
+                    <X size={17} />
+                  </button>
+                </div>
+              )}
+
+              {/* Db Image */}
+              {editTodo?.attachmentUrl && (
+                <div className="mt-4 relative w-fit">
+                  <img
+                    src={editTodo.attachmentUrl}
+                    alt="uploaded attachment"
+                    className="w-80 rounded-md shadow-md"
+                  />
+
+                  {/* Remove attachment from edit */}
+                  <button
+                    type="button"
+                    className="absolute top-[-0.5rem] right-[-0.5rem] bg-white text-black border rounded-full w-8 h-8 flex items-center justify-center"
+                    onClick={removeCurrentAttachment}
+                  >
+                    <X size={17} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Activity Log */}
-          <div className="flex flex-col col-span-2 bg-neutral-100 border-l-[1px] border-neutral-300">
-            <div className="bg-white p-4 text-neutral-600 border-b-[1px] border-neutral-300">
+          <div
+            className={`${
+              windowSize.width < 1024
+                ? activeTab === "activity"
+                  ? "lg:flex flex-1 overflow-auto"
+                  : "hidden"
+                : "lg:flex"
+            } flex-col col-span-2 lg:bg-neutral-100 border-l-[1px] border-neutral-300`}
+          >
+            <div
+              className={`hidden lg:block bg-white p-4 text-neutral-600 border-b-[1px] border-neutral-300`}
+            >
               Activity
             </div>
             <div className="flex flex-col space-y-2 pt-4 flex-1 overflow-y-auto">
               {editTodo.historyActivity.map(
                 (activity: { status: string; at: Date }, index) => (
-                  <div className="flex justify-between px-4 text-neutral-600 text-sm" key={index}>
+                  <div
+                    className="flex justify-between px-4 text-neutral-600 text-sm"
+                    key={index}
+                  >
                     <div className="w-[75%]">{activity.status}</div>
-                    <div>{moment(activity.at).format("D MMM, YYYY")}</div>
+                    <div>{`${moment(activity.at).format("D MMM")} at ${moment(activity.at).format("h.mm a")}`}</div>
                   </div>
                 )
               )}
             </div>
           </div>
         </div>
-        <div className="px-4 py-4 rounded-2xl rounded-tl-none rounded-tr-none flex justify-end space-x-2 bg-neutral-100 border-t border-neutral-300">
+        <div
+          className={`${
+            windowSize.width < 1024
+              ? activeTab === "activity"
+                ? "hidden"
+                : ""
+              : "block"
+          } px-4 py-4 rounded-2xl rounded-tl-none rounded-tr-none flex justify-end space-x-2 bg-neutral-100 border-t border-neutral-300`}
+        >
           <button
             onClick={() => closeAndResetForm()}
             className="text-sm px-4 py-1 uppercase rounded-full border border-neutral-300 bg-white"
@@ -238,7 +480,6 @@ export default function EditTaskModal({
             cancel
           </button>
           <button
-            onClick={handleEditTodo}
             type="submit"
             className="text-sm px-4 py-1 uppercase bg-fuchsia-600 text-white rounded-full"
           >
@@ -246,6 +487,6 @@ export default function EditTaskModal({
           </button>
         </div>
       </div>
-    </div>
+    </Form>
   );
 }

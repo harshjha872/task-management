@@ -7,22 +7,28 @@ import { useAppDispatch } from "@/store/hooks";
 import "react-datepicker/dist/react-datepicker.css";
 import { Todo, iTodo } from "@/lib/Todo/Todo";
 import Form from "next/form";
-import { supabase } from "@/lib/supabase/supabase";
 import { TaskFormData, taskSchema } from "@/lib/utils/schema";
+import { removeSpaceFromFileName } from "@/lib/utils/utils";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth-context/auth-context";
 
 const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
   const [newTodo, setNewTodo] = useState<iTodo | null>(null);
+  const [fileUpload, setFileUpload] = useState<{
+    fileName: string;
+    file: File;
+  } | null>(null);
+  const [imagePreview, setImagePreview] = useState(null as any);
+  const [errors, setErrors] = useState<Partial<TaskFormData>>({});
+
   const { user } = useAuth() as any;
   const dispatch = useAppDispatch();
 
   const closeAndResetForm = () => {
     closeModal();
     setNewTodo(null);
+    removeImagePreview()
   };
-
-  const [errors, setErrors] = useState<Partial<TaskFormData>>({});
 
   const validateForm = (data: TaskFormData) => {
     try {
@@ -39,22 +45,20 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
 
   const handleSubmit = async (formData: FormData) => {
     const data = Object.fromEntries(formData) as unknown as TaskFormData;
-    console.log(data);
     if (validateForm(data)) {
       if (newTodo) {
         const newTodoObj = new Todo(newTodo);
-        if(user) {
-          await newTodoObj.uploadDataToFirebase(user?.email)
+        if (user) {
+          await newTodoObj.uploadDataToFirebase(
+            user?.email,
+            fileUpload ?? undefined
+          );
         }
         dispatch(addTodo(JSON.parse(JSON.stringify(newTodoObj))));
       }
-  
       closeAndResetForm();
     }
   };
-
-  const [fileUpload, setFileUpload] = useState(null as any);
-  const [imagePreview, setImagePreview] = useState(null as any);
 
   async function handleFileInputChange(e: any) {
     const file = e.target.files[0];
@@ -68,7 +72,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
 
     reader.readAsDataURL(file);
 
-    setFileUpload(file);
+    setFileUpload({ file: file, fileName: removeSpaceFromFileName(file.name) });
   }
 
   const removeImagePreview = () => {
@@ -81,7 +85,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
       (pre) =>
         ({
           ...pre,
-          dueDate: date,
+          dueDate: new Date(date),
         } as iTodo)
     );
   };
@@ -126,34 +130,14 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
     );
   };
 
-  const handleAddTodo = async () => {
-    if (newTodo) {
-      const newTodoObj = new Todo(newTodo);
-      dispatch(addTodo(JSON.parse(JSON.stringify(newTodoObj))));
-    }
-
-    if (fileUpload !== null) {
-      // const { data, error } = await supabase.storage
-      // .from('taskdocs')
-      // .upload('test_file_1', fileUpload);
-    }
-
-    // data
-    // Object
-    //   fullPath: "taskdocs/test_file_1"
-    //   id: "1ef5c89e-bbdd-415e-85e8-349a09a0cad7"
-    //   path: "test_file_1"
-
-    // console.log(data, error)
-    closeAndResetForm();
-  };
+  console.log(newTodo)
 
   return (
     <Form
       action={handleSubmit}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex lg:items-center items-end justify-center bg-black bg-opacity-50"
     >
-      <div className="bg-white rounded-2xl shadow-lg w-[42rem]">
+      <div className="bg-white rounded-br-none rounded-bl-none rounded-tr-2xl rounded-tl-2xl lg:rounded-2xl shadow-lg flex flex-col max-h-[650px] lg:h-auto overflow-auto lg:w-[42rem] w-full">
         <div className="flex justify-between items-center border-b py-5 px-4">
           <h2 className="text-xl">Create task</h2>
           <button
@@ -164,7 +148,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
           </button>
         </div>
 
-        <div className="px-4 py-3 grid gap-3">
+        <div className="px-4 py-3 grid gap-3 flex-1">
           {/* Task title */}
           <div>
             <input
@@ -193,7 +177,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
           </div>
 
           {/* Category, date and status */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="flex flex-wrap lg:grid lg:grid-cols-3 gap-3">
             {/* Category */}
             <div>
               <div className="text-sm text-neutral-500 mb-2">
@@ -206,6 +190,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
                     name="taskCategory"
                     value="work"
                     className="sr-only peer"
+                    defaultChecked={newTodo?.taskCategory === 'work'}
                     onChange={handleSelectCategory}
                   />
                   <div className="px-6 py-2 text-sm rounded-full font-medium border peer-checked:bg-fuchsia-800 peer-checked:text-white">
@@ -218,6 +203,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
                     name="taskCategory"
                     value="personal"
                     className="sr-only peer"
+                    defaultChecked={newTodo?.taskCategory === 'personal'}
                     onChange={handleSelectCategory}
                   />
                   <div className="px-6 py-2 text-sm rounded-full font-medium border peer-checked:bg-fuchsia-800 peer-checked:text-white">
@@ -250,19 +236,22 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
               /> */}
                 <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5" />
               </div>
-                {errors.dueDate && (
-                  <p className="mt-1 text-[.7rem] text-red-600">{errors.dueDate}</p>
-                )}
+              {errors.dueDate && (
+                <p className="mt-1 text-[.7rem] text-red-600">
+                  {errors.dueDate}
+                </p>
+              )}
             </div>
 
             {/* Status */}
-            <div>
+            <div className="w-[220.5px] lg:w-auto">
               <div className="text-sm text-neutral-500 mb-2">Task status*</div>
               <div className="grid">
                 <ChevronDown className="pointer-events-none z-10 right-[.5rem] text-neutral-700 relative col-start-1 row-start-1 h-4 w-4 self-center justify-self-end forced-colors:hidden" />
                 <select
                   name="taskStatus"
                   id="taskStatus"
+                  value={newTodo?.taskStatus}
                   className="row-start-1 col-start-1 bg-neutral-50 border border-neutral-300 text-neutral-500 text-sm rounded-lg focus:ring-neutral-300 focus:border-neutral-300 block w-full p-[.58rem] pr-[2.5rem] appearance-none placeholder:text-sm"
                   onChange={handleStatusChange}
                 >
@@ -281,7 +270,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
           </div>
 
           {/* Attachments */}
-          <div className={`${imagePreview ? "" : "mb-20"}`}>
+          <div className={`${imagePreview ? "" : " lg:mb-20 mb-8"}`}>
             <div className="text-sm text-neutral-500 mb-2">Attachment</div>
             <label
               htmlFor="fileUploadAttachment"
