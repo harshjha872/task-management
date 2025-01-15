@@ -39,6 +39,7 @@ export default function CustomMenu({ items, children, background = 'pink', posit
                   item.onClick();
                   setIsOpen(false);
                 }}
+
                 className={`text-left px-4 py-[6px] text-sm ${background == 'black' ? 'text-neutral-200 hover:text-white' : 'text-gray-700 hover:text-gray-900'}  `}
                 role="menuitem"
               >

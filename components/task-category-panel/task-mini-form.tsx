@@ -121,7 +121,7 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
   return (
     <Form
       action={submitAddTaskFromMiniForm}
-      className="flex flex-col bg-neutral-50"
+      className="flex flex-col bg-neutral-100"
     >
       <div className="grid lg:grid-cols-5 px-6 py-2">
         <div className="lg:col-span-2 flex items-center gap-3">
@@ -131,7 +131,7 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
           </label>
           <div className="w-6 h-6 text-gray-400 " />
           <input
-            className="py-2 pl-6 focus:border-none focus:outline-none bg-neutral-50"
+            className="py-2 pl-6 focus:border-none focus:outline-none bg-neutral-100"
             type="text"
             value={newTodo?.taskName || ""}
             placeholder="Task title"
@@ -151,12 +151,7 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
                   placeholderText="Add Date"
                   onChange={handleSetDate}
                 />
-                {/* <input
-                            required
-                            className="border border-neutral-300 placeholder:text-neutral-500 rounded-lg bg-neutral-50 w-full px-3 py-1.5 placeholder:text-sm"
-                            placeholder="DD/MM/YYYY"
-                          /> */}
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-5 w-5" />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-700 h-4 w-4" />
               </div>
             )}
           </div>
@@ -186,7 +181,7 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
           </CustomMenu>
         </div>
       </div>
-      <div className="grid lg:grid-cols-5 px-6 py-2 border-b">
+      <div className="grid lg:grid-cols-5 px-6 py-2 pb-4 border-b">
         <div className="lg:col-span-2 flex items-center gap-3">
           <label className="flex items-center justify-center w-5 h-5 rounded cursor-pointer">
             <input type="checkbox" className="hidden" />
@@ -195,10 +190,10 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
           <div className="w-6 h-6 text-gray-400 " />
           <button
             type="submit"
-            className="ml-6 px-3 bg-fuchsia-800 flex rounded-full py-1 text-white items-center justify-center"
+            className="ml-6 px-5 bg-fuchsia-800 flex rounded-full py-1 text-white items-center justify-center"
           >
-            <span>Add</span>
-            <CornerDownLeft size={20} color="white" className="pl-2" />
+            <span className="uppercase">Add</span>
+            <CornerDownLeft size={21} color="white" className="pl-2" />
           </button>
           <button
             onClick={() => closeFormAndReset()}
@@ -211,7 +206,3 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
     </Form>
   );
 }
-
-const DueDate = ({ dueDate }: { dueDate: Date }) => {
-  return <div>{dueDate.toString()}</div>;
-};

@@ -61,16 +61,22 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
   };
 
   async function handleFileInputChange(e: any) {
+    const Doctype = [ "application/pdf",
+      "application/msword", 
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
+    if(!Doctype.includes(file.type)) {
+      const reader = new FileReader();
+  
+      reader.onload = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
 
-    reader.onload = () => {
-      setImagePreview(reader.result);
-    };
-
-    reader.readAsDataURL(file);
 
     setFileUpload({ file: file, fileName: removeSpaceFromFileName(file.name) });
   }
@@ -130,7 +136,6 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
     );
   };
 
-  console.log(newTodo)
 
   return (
     <Form
@@ -287,10 +292,11 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
               className="hidden"
               id="fileUploadAttachment"
               type="file"
+              accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
               onChange={handleFileInputChange}
             />
             {/* Image Preview */}
-            {imagePreview && (
+            {imagePreview ? (
               <div className="mt-4 relative w-fit">
                 <img
                   src={imagePreview}
@@ -307,7 +313,10 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
                   <X size={17} />
                 </button>
               </div>
-            )}
+            ) : (fileUpload && <div className="flex px-4 py-2 mt-2 border rounded-lg justify-between">
+              {fileUpload.fileName}
+              <X onClick={() => setFileUpload(null)}/>
+              </div>)}
           </div>
         </div>
         <div className="px-4 py-4 rounded-2xl rounded-tl-none rounded-tr-none flex justify-end space-x-2 bg-neutral-100 border-t border-neutral-300">

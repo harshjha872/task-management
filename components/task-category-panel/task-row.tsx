@@ -30,7 +30,7 @@ export default function TaskRow({
   multiSelectRows,
 }: {
   todo: iTodo;
-  handleRowSelect: (docId:string) => void;
+  handleRowSelect: (docId: string) => void;
   multiSelectRows: Array<string>;
 }) {
   const [showEditTaskModal, setShowEditTaskModal] = useState(false);
@@ -85,7 +85,7 @@ export default function TaskRow({
 
   const getConvertedDueDate = (date: Date) => {
     const jsDate = new Date(date);
-    if(moment(new Date).isSame(moment(jsDate), 'day')) return 'Today'
+    if (moment(new Date()).isSame(moment(jsDate), "day")) return "Today";
     else return moment(jsDate).format("D MMM, YYYY");
   };
 
@@ -117,14 +117,33 @@ export default function TaskRow({
           />
         </label>
         <GripVertical
+          size={15}
           {...listeners}
           className="hidden lg:block w-6 h-6 text-gray-400 hover:cursor-grab  active:cursor-grabbing"
         />
-        <CircleCheck className="w-6 h-6 text-gray-400" />
-        <span className={`text-sm lg:text-lg ${todo.taskStatus === 'completed' ? 'line-through' : ''}`}>{todo.taskName}</span>
+        <CircleCheck
+          fill={todo.taskStatus === "completed" ? "green" : "rgb(156 163 175)"}
+          className="w-6 h-6 text-white"
+        />
+        <div className="w-full flex items-center justify-between">
+          <span
+            className={`${
+              todo.taskStatus === "completed" ? "line-through" : ""
+            }`}
+          >
+            {todo.taskName}
+          </span>
+          <CustomMenu items={threedots}>
+            <div className="lg:hidden right-0 col-span-4 hover:bg-neutral-200 cursor-pointer transition-all duration-300 p-2 rounded-md">
+              <Ellipsis size={15} />
+            </div>
+          </CustomMenu>
+        </div>
       </div>
-      <div className="hidden lg:block">{getConvertedDueDate(todo.dueDate)}</div>
-      <div className="hidden lg:block bg-neutral-200 text-black rounded-md px-3 py-1 w-fit text-sm uppercase">
+      <div className="hidden lg:flex items-center ">
+        {getConvertedDueDate(todo.dueDate)}
+      </div>
+      <div className="hidden lg:flex items-center bg-neutral-200 text-black rounded-md px-3 py-1 w-fit text-sm uppercase">
         <CustomMenu items={changeStatus}>{todo.taskStatus}</CustomMenu>
       </div>
       <div className="hidden lg:flex justify-between items-center">

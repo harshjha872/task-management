@@ -9,6 +9,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  MouseSensor,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -17,10 +18,18 @@ import {
 } from "@dnd-kit/sortable";
 import { useDispatch, useSelector } from "react-redux";
 import { useAppSelector } from "@/store/hooks";
-import { reorderTasksKanban, updateTaskStatus } from "@/store/todoSlice";
+import {
+  reorderTasksKanban,
+  updateTaskStatus,
+  deleteTask,
+} from "@/store/todoSlice";
 import { iTodo } from "@/lib/Todo/Todo";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, PencilLine, Trash2 } from "lucide-react";
 import moment from "moment";
+import CustomMenu from "../dropdown/dropdown";
+import { Todo } from "@/lib/Todo/Todo";
+import { useAuth } from "@/lib/auth-context/auth-context";
+import EditTaskModal from "../modals/edittaskmodal";
 
 export default function KanbanBoard({
   getTasksOnBasisOf,
@@ -37,24 +46,28 @@ export default function KanbanBoard({
       id: "todo",
       title: "TO-DO",
       bg: "bg-pink-200",
-      display: 'todo'
+      display: "todo",
     },
     "in-progress": {
       id: "inprogress",
       title: "in-progress",
       bg: "bg-sky-200",
-      display: 'In Progress'
+      display: "In Progress",
     },
     completed: {
       id: "completed",
       title: "Completed",
       bg: "bg-green-200",
-      display: 'Completed'
+      display: "Completed",
     },
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -117,14 +130,24 @@ export default function KanbanBoard({
               >
                 {column.title}
               </div>
-              <div className={`${getTasksOnBasisOf(column.id).length == 0 ? 'flex items-center flex-1 justify-center' : ''} space-y-2 mt-2`}>
+              <div
+                className={`${
+                  getTasksOnBasisOf(column.id).length == 0
+                    ? "flex items-center flex-1 justify-center"
+                    : ""
+                } space-y-2 mt-2`}
+              >
                 <SortableContext
                   items={getTasksOnBasisOf(column.id).map((task) => task.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {getTasksOnBasisOf(column.id).length == 0 ?  <div className="text-neutral-500">{`No tasks in ${column.display}`}</div>  : getTasksOnBasisOf(column.id).map((task) => (
-                    <SortableTask key={task.id} task={task} />
-                  ))}
+                  {getTasksOnBasisOf(column.id).length == 0 ? (
+                    <div className="text-neutral-500">{`No tasks in ${column.display}`}</div>
+                  ) : (
+                    getTasksOnBasisOf(column.id).map((task) => (
+                      <SortableTask key={task.id} task={task} />
+                    ))
+                  )}
                 </SortableContext>
               </div>
             </div>
@@ -153,10 +176,37 @@ export const SortableTask = ({ task }: { task: iTodo }) => {
     isDragging,
   } = useSortable({ id: task.id });
 
+  const dispatch = useDispatch();
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const closeModal = () => {
+    setShowEditTaskModal(false);
+  };
+
+  const { user } = useAuth() as any;
+  const threedots = [
+    {
+      label: "Edit",
+      onClick: () => setShowEditTaskModal(true),
+      icon: <PencilLine size={15} color="black" />,
+    },
+    {
+      label: "Delete",
+      onClick: () => handleDeleteTask(),
+      icon: <Trash2 size={15} color="red" />,
+    },
+  ];
+
+  const handleDeleteTask = () => {
+    const newObj = new Todo(task);
+    newObj.deleteTaskInFirebase(user?.email);
+    dispatch(deleteTask(newObj.id));
   };
 
   const getConvertedDueDate = (date: Date) => {
@@ -182,15 +232,13 @@ export const SortableTask = ({ task }: { task: iTodo }) => {
           >
             {task.taskName}
           </h4>
-          <Ellipsis
-            color="black"
-            size={17}
-            className="cursor-pointer z-[999999]"
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log("clicked");
-            }}
-          />
+          <CustomMenu items={threedots}>
+            <Ellipsis
+              color="black"
+              size={17}
+              className="cursor-pointer z-[999999]"
+            />
+          </CustomMenu>
         </div>
         <p className="text-sm text-gray-600">{task.taskDescription}</p>
       </div>
@@ -202,6 +250,11 @@ export const SortableTask = ({ task }: { task: iTodo }) => {
           {getConvertedDueDate(task.dueDate)}
         </div>
       </div>
+
+      {/* Edit task modal */}
+      {showEditTaskModal && (
+        <EditTaskModal closeModal={closeModal} currentTodo={task} />
+      )}
     </div>
   );
 };

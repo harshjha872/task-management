@@ -156,8 +156,21 @@ export default function EditTaskModal({
   };
 
   async function handleFileInputChange(e: any) {
+    const Doctype = [ "application/pdf",
+      "application/msword", 
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+
     const file = e.target.files[0];
     if (!file) return;
+
+    if(!Doctype.includes(file.type)) {
+      const reader = new FileReader();
+  
+      reader.onload = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
 
     removeCurrentAttachment()
     const reader = new FileReader();
@@ -390,10 +403,11 @@ export default function EditTaskModal({
                 className="hidden"
                 id="fileUploadAttachment"
                 type="file"
+                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                 onChange={handleFileInputChange}
               />
               {/* Image Preview */}
-              {imagePreview && (
+              {imagePreview ? (
                 <div className="mt-4 relative w-fit">
                   <img
                     src={imagePreview}
@@ -410,10 +424,13 @@ export default function EditTaskModal({
                     <X size={17} />
                   </button>
                 </div>
-              )}
+              ) : (fileUpload && <div className="flex px-4 py-2 mt-2 border rounded-lg justify-between">
+                            {fileUpload.fileName}
+                            <X onClick={() => setFileUpload(null)}/>
+                            </div>)}
 
               {/* Db Image */}
-              {editTodo?.attachmentUrl && (
+              {(editTodo?.attachmentUrl && (editTodo?.attachmentUrl.includes('.jpg') || editTodo?.attachmentUrl.includes('.jpeg') || editTodo?.attachmentUrl.includes('.png'))) ? (
                 <div className="mt-4 relative w-fit">
                   <img
                     src={editTodo.attachmentUrl}
@@ -430,7 +447,10 @@ export default function EditTaskModal({
                     <X size={17} />
                   </button>
                 </div>
-              )}
+              ) : (editTodo?.attachmentUrl && <div className="flex px-4 py-2 mt-2 border rounded-lg justify-between">
+                {editTodo.attachment}
+                <X onClick={() => {removeCurrentAttachment}}/>
+                </div>)}
             </div>
           </div>
 
@@ -453,7 +473,7 @@ export default function EditTaskModal({
               {editTodo.historyActivity.map(
                 (activity: { status: string; at: Date }, index) => (
                   <div
-                    className="flex justify-between px-4 text-neutral-600 text-sm"
+                    className="flex justify-between px-4 text-neutral-600 text-xs"
                     key={index}
                   >
                     <div className="w-[75%]">{activity.status}</div>

@@ -1,5 +1,4 @@
 import moment from "moment";
-import { uid } from "../utils/utils";
 import { firebaseConfig } from "../firebase/firebase";
 import { initializeApp } from "firebase/app";
 import { getFirestore, Timestamp } from "firebase/firestore";
@@ -106,6 +105,14 @@ export class Todo {
         } else if (isFileBefore && isFileRemoved) {
           this.appendHistoryActivity(`you removed the attachment`);
         }
+      } else if(key == 'dueDate') {
+        this.appendHistoryActivity(
+          `you updated the ${key} from ${moment(new Date(oldValue)).format("D MMM, YYYY") } to ${moment(new Date(newValue)).format("D MMM, YYYY")}`
+        );
+      } else if(key == 'taskDescription') {
+        this.appendHistoryActivity(
+          `you updated the description`
+        );
       } else {
         this.appendHistoryActivity(
           `you updated the ${key} from ${oldValue} to ${newValue}`

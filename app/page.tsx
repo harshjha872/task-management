@@ -32,6 +32,8 @@ const Tabss = [
   { name: "Board", icon: <SquareKanban size={18} /> },
 ];
 
+let totalTaskInDb: any;
+
 export default function Home() {
   const { user, logout } = useAuth() as any;
 
@@ -40,6 +42,8 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       router.push("/");
+    } else {
+      router.push("/login");
     }
   }, [user, router]);
 
@@ -48,7 +52,7 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       const allTasks = await Todo.getTasksFromFireStore(user?.email);
-      console.log(allTasks);
+      totalTaskInDb = allTasks.length;
       dispatch(setTasksFromDb(JSON.parse(JSON.stringify(allTasks))));
     })();
   }, []);
@@ -260,14 +264,26 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={`${activeFilters !== null ? "" : "flex-1"}`}>
-        {activeTab === 0 ? (
-          <ListView getTasksOnBasisOf={getTasksOnBasisOf} />
-        ) : (
-          <KanbanBoard getTasksOnBasisOf={getTasksOnBasisOf} />
-        )}
-      </div>
+      {(activeFilters?.taskCategory || activeFilters?.dueDate || searchTask) &&
+      getTasksOnBasisOf("todo").length === 0 &&
+      getTasksOnBasisOf("inprogress").length === 0 &&
+      getTasksOnBasisOf("completed").length === 0 ? (
+        <div className="flex flex-col items-center justify-center flex-1">
+          <img src="/SearchNotFound.jpg" alt="nothing found" />
+          <span className="text-lg font-semibold mt-2">
 
+          it looks like we cant find any results that match{" "}
+          </span>
+        </div>
+      ) : (
+        <div className={`${activeFilters !== null ? "" : "flex-1"}`}>
+          {activeTab === 0 ? (
+            <ListView getTasksOnBasisOf={getTasksOnBasisOf} />
+          ) : (
+            <KanbanBoard getTasksOnBasisOf={getTasksOnBasisOf} />
+          )}
+        </div>
+      )}
       {/* Add task modal */}
       {showAddTaskModal && <Addtaskmodal closeModal={closeModal} />}
     </div>

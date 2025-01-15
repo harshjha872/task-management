@@ -1,10 +1,7 @@
 import { useState } from "react";
 import {
   ChevronUp,
-  CircleCheck,
-  GripVertical,
   Plus,
-  Files,
 } from "lucide-react";
 import { Todo } from "@/lib/Todo/Todo";
 import TaskRow from "./task-row";
@@ -26,9 +23,6 @@ import {
 } from "@dnd-kit/sortable";
 import TaskMiniForm from "./task-mini-form";
 import { iTodo } from "@/lib/Todo/Todo";
-import CustomMenu from "../dropdown/dropdown";
-import { useAuth } from "@/lib/auth-context/auth-context";
-import { updateStatusMulitpleInStore, deleteMultipleInStore } from "@/store/todoSlice";
 
 export default function TaskCategoryPanel({
   title,
@@ -74,7 +68,7 @@ export default function TaskCategoryPanel({
       <div className="w-full">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full flex items-center justify-between px-4 py-3 rounded-t-xl transition-colors ${header_color}`}
+          className={`${isOpen ? '' : title === 'Todo' ? '' :'rounded-b-xl'} w-full flex items-center justify-between px-4 py-3 rounded-t-xl transition-colors ${header_color}`}
         >
           <span className="font-medium">
             {title} ({Tasks.length})
@@ -89,8 +83,8 @@ export default function TaskCategoryPanel({
 
         {/* Mini form */}
         {title === "Todo" && (
-          <div className="hidden lg:block">
-            <div className="grid lg:grid-cols-5 px-6 py-4 border-b">
+          <div className={`hidden lg:block bg-neutral-100 ${!isOpen ? 'rounded-b-lg' :'' } border-b`} >
+            <div className="grid lg:grid-cols-5 px-6 py-4 ">
               <div className="lg:col-span-2 flex items-center gap-3">
                 <label className="flex items-center justify-center w-5 h-5 rounded cursor-pointer">
                   <div className="w-4 h-4"></div>
@@ -112,12 +106,13 @@ export default function TaskCategoryPanel({
         {/* Accordion Content */}
         <div
           className={`
-        bg-gray-50 rounded-b-xl transition-all duration-200 ease-in-out
+        bg-neutral-100 rounded-b-xl transition-all duration-200 ease-in-out
         ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}
       `}
         >
           <div className="divide-y divide-gray-200">
             {isOpen && (
+              Tasks.length === 0 ? <div className="h-32 flex justify-center items-center">No tasks in {title}</div> :
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -139,6 +134,7 @@ export default function TaskCategoryPanel({
               </DndContext>
             )}
           </div>
+
         </div>
       </div>
     </>
