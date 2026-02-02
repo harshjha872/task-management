@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { RootState } from "@/store/store";
 import {
   ChevronDown,
   Search,
@@ -13,7 +14,7 @@ import Navbar from "@/components/navbar/navbar";
 import Addtaskmodal from "@/components/modals/addtaskmodal";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context/auth-context";
-import { Todo } from "@/lib/Todo/Todo";
+import { Todo, iTodo } from "@/lib/Todo/Todo";
 import { setTasksFromDb } from "@/store/todoSlice";
 import CustomMenu from "@/components/dropdown/dropdown";
 import DatePicker from "react-datepicker";
@@ -44,8 +45,11 @@ export default function Home() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    console.log("Home useEffect [user] - user:", user);
+    if (!user?.email) return;
     (async () => {
       const allTasks = await Todo.getTasksFromLocalStorage(user?.email);
+      console.log("Home useEffect - allTasks fetched:", allTasks);
       dispatch(setTasksFromDb(JSON.parse(JSON.stringify(allTasks))));
     })();
   }, [user]);
@@ -56,7 +60,7 @@ export default function Home() {
 
   const [activeTab, setActiveTab] = useState(0);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
-  const tasks = useAppSelector((state) => state.todoSlice.tasks);
+  const tasks = useAppSelector((state: RootState) => state.todoSlice.tasks);
 
   const onChangeDateRange = (dates: any) => {
     const [start, end] = dates;
@@ -103,9 +107,9 @@ export default function Home() {
 
   const getTasksOnBasisOf = (taskStatus: string) => {
     const filteredTasks = tasks.filter(
-      (task) => task.taskStatus === taskStatus
+      (task: iTodo) => task.taskStatus === taskStatus
     );
-    return filteredTasks.filter((tasks) => {
+    return filteredTasks.filter((tasks: iTodo) => {
       const matchSearch = tasks.taskName
         .toLowerCase()
         .includes(searchTask.toLowerCase());

@@ -50,17 +50,17 @@ export class Todo {
   attachmentUrl: string | null;
 
   constructor(todo: iTodo) {
-    this.docId = todo.docId ?? "";
-    this.id = todo.id ?? uuidv4();
+    this.docId = todo.docId || todo.id || uuidv4();
+    this.id = todo.id || uuidv4();
     this.taskName = todo.taskName;
     this.taskDescription = todo.taskDescription ?? "";
-    this.dueDate = todo.dueDate;
+    this.dueDate = todo.dueDate ? new Date(todo.dueDate) : new Date();
     this.taskCategory = todo.taskCategory;
     this.taskStatus = todo.taskStatus;
     this.attachment = todo.attachment ?? null;
     this.attachmentUrl = todo.attachmentUrl ?? null;
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+    this.createdAt = todo.createdAt ? new Date(todo.createdAt) : new Date();
+    this.updatedAt = todo.updatedAt ? new Date(todo.updatedAt) : new Date();
     this.historyActivity = todo.historyActivity || [
       {
         status: "created the task",
@@ -185,22 +185,29 @@ export class Todo {
     });
   }
 
-  public static async getTasksFromLocalStorage(email: string) {
+  public static async getTasksFromLocalStorage(email: string): Promise<Todo[]> {
     const storageKey = `tasks_${email}`;
     const tasksData = localStorage.getItem(storageKey);
     if (!tasksData) return [];
 
-    const rawTasks = JSON.parse(tasksData);
-    return rawTasks.map((data: any) => new Todo({
-      ...data,
-      dueDate: new Date(data.dueDate),
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
-      historyActivity: data.historyActivity.map((h: any) => ({
-        ...h,
-        at: new Date(h.at)
-      }))
-    }));
+    try {
+      const rawTasks = JSON.parse(tasksData);
+      if (!Array.isArray(rawTasks)) return [];
+      
+      return rawTasks.map((data: any) => new Todo({
+        ...data,
+        dueDate: data.dueDate ? new Date(data.dueDate) : new Date(),
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        historyActivity: (data.historyActivity || []).map((h: any) => ({
+          ...h,
+          at: h.at ? new Date(h.at) : new Date()
+        }))
+      }));
+    } catch (err) {
+      console.error("Error parsing tasks from local storage", err);
+      return [];
+    }
   }
 
   async uploadDataToLocalStorage(
@@ -285,7 +292,7 @@ export class Todo {
 
       const storageKey = `tasks_${email}`;
       const existingTasks = await Todo.getTasksFromLocalStorage(email);
-      const updatedTasks = existingTasks.map((t: Todo) => t.id === this.id ? this : t);
+      const updatedTasks = existingTasks.map((t: iTodo) => t.id === this.id ? this : t);
       localStorage.setItem(storageKey, JSON.stringify(updatedTasks));
     } catch (err) {
       console.log(err);
