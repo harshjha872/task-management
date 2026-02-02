@@ -23,15 +23,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <Provider store={store}>
-        <AuthProvider>
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          >
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <Provider store={store}>
+          <AuthProvider>
             {children}
-          </body>
-        </AuthProvider>
-      </Provider>
+          </AuthProvider>
+        </Provider>
+      </body>
     </html>
   );
 }
