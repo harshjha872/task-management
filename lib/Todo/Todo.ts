@@ -1,24 +1,24 @@
 import moment from "moment";
-import { firebaseConfig } from "../firebase/firebase";
-import { initializeApp } from "firebase/app";
-import { getFirestore, Timestamp } from "firebase/firestore";
-import {
-  collection,
-  addDoc,
-  query,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  writeBatch 
-} from "firebase/firestore";
+// import { firebaseConfig } from "../firebase/firebase";
+// import { initializeApp } from "firebase/app";
+// import { getFirestore, Timestamp } from "firebase/firestore";
+// import {
+//   collection,
+//   addDoc,
+//   query,
+//   getDocs,
+//   doc,
+//   updateDoc,
+//   deleteDoc,
+//   writeBatch 
+// } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
-import { supabase } from "../supabase/supabase";
+// import { supabase } from "../supabase/supabase";
 import { ConvertTimestampToDate } from "../utils/utils";
 
-const app = initializeApp(firebaseConfig);
+// const app = initializeApp(firebaseConfig);
 
-const db = getFirestore(app);
+// const db = getFirestore(app);
 
 export interface iTodo {
   docId: string;
@@ -130,7 +130,7 @@ export class Todo {
     this.updatedAt = new Date();
   }
 
-  public static async deleteFileFromSupabase({
+  public static async deleteFileFromLocalStorage({
     fileName,
     email,
     taskId,
@@ -140,15 +140,19 @@ export class Todo {
     taskId: string;
   }) {
     try {
-      await supabase.storage
-        .from("taskdocs")
-        .remove([`${email}/${taskId}/${fileName}`]);
+      const storageKey = `taskdocs_${email}`;
+      const existingFiles = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      const fileKey = `${taskId}/${fileName}`;
+      if (existingFiles[fileKey]) {
+        delete existingFiles[fileKey];
+        localStorage.setItem(storageKey, JSON.stringify(existingFiles));
+      }
     } catch (err) {
       console.log(err);
     }
   }
 
-  public static async uploadFileToSupabase({
+  public static async uploadFileToLocalStorage({
     file,
     fileName,
     email,
@@ -158,60 +162,55 @@ export class Todo {
     fileName: string;
     email: string;
     taskId: string;
-  }) {
-    try {
-       await supabase.storage
-        .from("taskdocs")
-        .upload(`${email}/${taskId}/${fileName}`, file);
-
-      const p = supabase.storage
-        .from("taskdocs")
-        .getPublicUrl(`${email}/${taskId}/${fileName}`);
-      return p.data.publicUrl;
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  public static async getTasksFromFireStore(email: string) {
-    const q = query(collection(db, email));
-    const querySnapshot = await getDocs(q);
-    const allTasks = [] as Array<any>;
-    querySnapshot.forEach((doc) => {
-      console.log(doc.data());
-      const historyActivity = doc.data().historyActivity.map((obj: any) => ({
-        ...obj,
-        at: new Date(obj.at instanceof Timestamp ? ConvertTimestampToDate(obj.at) : obj.at),
-      }));
-
-      allTasks.push(
-        new Todo({
-          id: doc.data().id,
-          taskName: doc.data().taskName,
-          taskCategory: doc.data().taskCategory,
-          taskDescription: doc.data().taskDescription,
-          taskStatus: doc.data().taskStatus,
-          docId: doc.id,
-          historyActivity,
-          createdAt: new Date(doc.data().createdAt instanceof Timestamp ? ConvertTimestampToDate(doc.data().createdAt) : doc.data().createdAt),
-          dueDate: new Date(doc.data().dueDate instanceof Timestamp ? ConvertTimestampToDate(doc.data().dueDate) : doc.data().dueDate),
-          updatedAt: new Date(doc.data().updatedAt instanceof Timestamp ? ConvertTimestampToDate(doc.data().updatedAt) : doc.data().updatedAt),
-          attachment: doc.data().attachment,
-          attachmentUrl: doc.data().attachmentUrl,
-        })
-      );
+  }): Promise<string | undefined> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const base64String = reader.result as string;
+          const storageKey = `taskdocs_${email}`;
+          const existingFiles = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          const fileKey = `${taskId}/${fileName}`;
+          
+          existingFiles[fileKey] = base64String;
+          localStorage.setItem(storageKey, JSON.stringify(existingFiles));
+          
+          resolve(base64String);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
     });
-    return allTasks;
   }
 
-  async uploadDataToFirebase(
+  public static async getTasksFromLocalStorage(email: string) {
+    const storageKey = `tasks_${email}`;
+    const tasksData = localStorage.getItem(storageKey);
+    if (!tasksData) return [];
+
+    const rawTasks = JSON.parse(tasksData);
+    return rawTasks.map((data: any) => new Todo({
+      ...data,
+      dueDate: new Date(data.dueDate),
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
+      historyActivity: data.historyActivity.map((h: any) => ({
+        ...h,
+        at: new Date(h.at)
+      }))
+    }));
+  }
+
+  async uploadDataToLocalStorage(
     email: string,
     fileDetails?: { fileName: string; file: File }
   ) {
     try {
       let FileUrl;
       if (fileDetails) {
-        FileUrl = await Todo.uploadFileToSupabase({
+        FileUrl = await Todo.uploadFileToLocalStorage({
           file: fileDetails.file,
           email,
           fileName: fileDetails.fileName,
@@ -219,28 +218,22 @@ export class Todo {
         });
       }
 
-      const res = await addDoc(collection(db, email), {
-        id: this.id,
-        taskName: this.taskName,
-        taskDescription: this.taskDescription ?? null,
-        dueDate: this.dueDate,
-        taskCategory: this.taskCategory,
-        taskStatus: this.taskStatus,
-        attachment: FileUrl ? fileDetails?.fileName : null,
-        historyActivity: this.historyActivity,
-        createdAt: this.createdAt,
-        updatedAt: this.updatedAt,
-        attachmentUrl: FileUrl ?? null,
-      });
+      const storageKey = `tasks_${email}`;
+      const existingTasks = await Todo.getTasksFromLocalStorage(email);
+      
+      if (FileUrl) {
+        this.attachment = fileDetails?.fileName || null;
+        this.attachmentUrl = FileUrl;
+      }
 
-      this.docId = res.id;
-      console.log(res);
+      existingTasks.push(this);
+      localStorage.setItem(storageKey, JSON.stringify(existingTasks));
     } catch (err) {
       console.log(err);
     }
   }
 
-  async updateTaskToFirebase(
+  async updateTaskInLocalStorage(
     email: string,
     previousState: iTodo,
     fileDetails?: { fileName: string; file: File }
@@ -259,27 +252,27 @@ export class Todo {
 
       if (isFileUploaded) {
         if (isFileBefore && previousState.attachment) {
-          await Todo.deleteFileFromSupabase({
+          await Todo.deleteFileFromLocalStorage({
             fileName: previousState.attachment,
             email,
             taskId: previousState.id,
           });
         }
 
-        const FileUrl = await Todo.uploadFileToSupabase({
-          file: fileDetails.file,
+        const FileUrl = await Todo.uploadFileToLocalStorage({
+          file: fileDetails!.file,
           email,
-          fileName: fileDetails.fileName,
+          fileName: fileDetails!.fileName,
           taskId: this.id,
         });
 
         if (FileUrl) {
-          this.attachment = fileDetails.fileName;
+          this.attachment = fileDetails!.fileName;
           this.attachmentUrl = FileUrl;
         }
       } else if (isFileBefore && isFileRemoved) {
         if (previousState.attachment)
-          await Todo.deleteFileFromSupabase({
+          await Todo.deleteFileFromLocalStorage({
             fileName: previousState.attachment,
             email,
             taskId: previousState.id,
@@ -290,31 +283,45 @@ export class Todo {
 
       this.updateHistoryActivity(previousState, isFileUploaded);
 
-      console.log(this.docId);
-      const docRef = doc(db, email, this.docId);
-      await updateDoc(docRef, JSON.parse(JSON.stringify(this)));
+      const storageKey = `tasks_${email}`;
+      const existingTasks = await Todo.getTasksFromLocalStorage(email);
+      const updatedTasks = existingTasks.map((t: Todo) => t.id === this.id ? this : t);
+      localStorage.setItem(storageKey, JSON.stringify(updatedTasks));
     } catch (err) {
       console.log(err);
     }
   }
 
-  async deleteTaskInFirebase(email: string) {
+  async deleteTaskInLocalStorage(email: string) {
     try {
-      const docRef = doc(db, email, this.docId);
-      await deleteDoc(docRef);
-      console.log("Document deleted successfully!");
+      if (this.attachment) {
+        await Todo.deleteFileFromLocalStorage({
+          fileName: this.attachment,
+          email,
+          taskId: this.id
+        });
+      }
+      const storageKey = `tasks_${email}`;
+      const existingTasks = await Todo.getTasksFromLocalStorage(email);
+      const filteredTasks = existingTasks.filter(t => t.id !== this.id);
+      localStorage.setItem(storageKey, JSON.stringify(filteredTasks));
     } catch (err) {
       console.log(err);
     }
   }
 
-  async updateStatusSingle(email: string, updateTo: string) {
+  async updateStatusSingle(email: string, updateTo: "todo" | "inprogress" | "completed") {
     try {
-      const docRef = doc(db, email, this.docId);
-  
-      await updateDoc(docRef, {
-        ['taskStatus']: updateTo,
+      const storageKey = `tasks_${email}`;
+      const existingTasks = await Todo.getTasksFromLocalStorage(email);
+      const updatedTasks = existingTasks.map((t: Todo) => {
+        if (t.id === this.id) {
+          t.taskStatus = updateTo;
+          t.appendHistoryActivity(`you updated the status to ${updateTo}`);
+        }
+        return t;
       });
+      localStorage.setItem(storageKey, JSON.stringify(updatedTasks));
     } catch(err) {
       console.log(err)
     }
@@ -322,12 +329,16 @@ export class Todo {
 
   public static async updateMultipleStatus(email: string, ids: Array<string>, status: 'todo' | 'inprogress' | 'completed') {
     try {
-      const batch = writeBatch(db)
-      ids.forEach((id) => {
-        const docRef = doc(db, email, String(id)); 
-        batch.update(docRef, { taskStatus: status }); 
+      const storageKey = `tasks_${email}`;
+      const existingTasks = await Todo.getTasksFromLocalStorage(email);
+      const updatedTasks = existingTasks.map((t: Todo) => {
+        if (ids.includes(t.id)) {
+          t.taskStatus = status;
+          t.appendHistoryActivity(`you updated the status to ${status}`);
+        }
+        return t;
       });
-      await batch.commit();
+      localStorage.setItem(storageKey, JSON.stringify(updatedTasks));
     } catch(err) {
       console.log(err)
     }
@@ -335,12 +346,21 @@ export class Todo {
 
   public static async deleteMultipleTasks(email: string, ids: Array<string>) {
     try {
-      const batch = writeBatch(db)
-      ids.forEach((id) => {
-        const docRef = doc(db, email, id); 
-        batch.delete(docRef); 
-      });
-      await batch.commit();
+      const storageKey = `tasks_${email}`;
+      const existingTasks = await Todo.getTasksFromLocalStorage(email);
+      
+      for (const t of existingTasks as Todo[]) {
+        if (ids.includes(t.id) && t.attachment) {
+          await Todo.deleteFileFromLocalStorage({
+            fileName: t.attachment,
+            email: email,
+            taskId: t.id
+          });
+        }
+      }
+
+      const filteredTasks = existingTasks.filter((t: Todo) => !ids.includes(t.id));
+      localStorage.setItem(storageKey, JSON.stringify(filteredTasks));
     } catch(err) {
       console.log(err)
     }

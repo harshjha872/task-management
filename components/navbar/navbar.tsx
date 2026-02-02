@@ -2,10 +2,10 @@
 import Image from "next/image";
 import React from "react";
 import { NotepadText } from "lucide-react";
-import { useAuth } from "@/lib/auth-context/auth-context";
+// import { useAuth } from "@/lib/auth-context/auth-context";
 
 const Navbar = () => {
-  const { user } = useAuth() as any;
+  // const { user } = useAuth() as any;
   return (
     <div className="flex w-full justify-between items-center px-6 py-4 shadow-md shadow-neutral-200 bg-pink-100  border-b ">
       <div className="flex md:space-x-2 items-center">
@@ -13,16 +13,16 @@ const Navbar = () => {
         <span className="text-lg">TaskBuddy</span>
       </div>
       <div className="flex space-x-2 items-center">
-        <div className={`relative h-8 w-8 ${user?.photoURL ? '' : 'bg-gradient-to-bl from-green-500 to-sky-500 rounded-full'}`}>
-        {user?.photoURL && <Image
+        <div className={`relative h-8 w-8 ${'bg-gradient-to-bl from-green-500 to-sky-500 rounded-full'}`}>
+        {/* {user?.photoURL && <Image
           alt="userimage"
           className="rounded-full"
           layout="fill"
           src={user?.photoURL}
           objectFit="cover"
-        />}
+        />} */}
         </div>
-        <div className="hidden md:block">{user?.displayName ?? 'Guest'}</div>
+        <div className="hidden md:block">{'Guest'}</div>
       </div>
     </div>
   );

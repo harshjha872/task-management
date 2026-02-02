@@ -3,7 +3,7 @@ import moment from "moment";
 import { Plus, Calendar, CornerDownLeft } from "lucide-react";
 import { useState } from "react";
 import CustomMenu from "../dropdown/dropdown";
-import { useAuth } from "@/lib/auth-context/auth-context";
+// import { useAuth } from "@/lib/auth-context/auth-context";
 import Form from "next/form";
 import { z } from "zod";
 import { TaskFormData, taskSchema } from "@/lib/utils/schema";
@@ -14,7 +14,7 @@ import { addTodo } from "@/store/todoSlice";
 
 export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
   const [newTodo, setNewTodo] = useState<iTodo | null>(null);
-  const { user } = useAuth() as any;
+  // const { user } = useAuth() as any;
   const [errors, setErrors] = useState<Partial<TaskFormData>>({});
 
   console.log(errors)
@@ -41,9 +41,9 @@ export default function TaskMiniForm({ closeForm }: { closeForm: () => void }) {
     if (validateForm()) {
       if (newTodo) {
         const newTodoObj = new Todo(newTodo);
-        if (user) {
-          await newTodoObj.uploadDataToFirebase(user?.email, undefined);
-        }
+        // if (user) {
+        //   await newTodoObj.uploadDataToFirebase(user?.email, undefined);
+        // }
         dispatch(addTodo(JSON.parse(JSON.stringify(newTodoObj))));
       }
       closeFormAndReset();

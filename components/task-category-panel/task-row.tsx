@@ -12,7 +12,7 @@ import EditTaskModal from "../modals/edittaskmodal";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import CustomMenu from "../dropdown/dropdown";
-import { useAuth } from "@/lib/auth-context/auth-context";
+// import { useAuth } from "@/lib/auth-context/auth-context";
 import { deleteTask, updateStatusSingleInStore } from "@/store/todoSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { iTodo } from "@/lib/Todo/Todo";
@@ -38,7 +38,7 @@ export default function TaskRow({
 
   const dispatch = useAppDispatch();
 
-  const { user } = useAuth() as any;
+  // const { user } = useAuth() as any;
 
   const threedots = [
     {
@@ -71,7 +71,7 @@ export default function TaskRow({
   const handleChangeStatusSingle = (status: string) => {
     if (todo.taskStatus !== status) {
       const obj = new Todo(todo);
-      obj.updateStatusSingle(user.email, status);
+      // obj.updateStatusSingle(user.email, status);
       dispatch(updateStatusSingleInStore({ id: obj.id, updateTo: status }));
     }
   };
@@ -88,7 +88,7 @@ export default function TaskRow({
 
   const handleDeleteTask = () => {
     const newObj = new Todo(todo);
-    newObj.deleteTaskInFirebase(user?.email);
+    // newObj.deleteTaskInFirebase(user?.email);
     dispatch(deleteTask(newObj.id));
   };
 

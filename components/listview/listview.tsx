@@ -8,7 +8,7 @@ import {
   deleteMultipleInStore,
   updateStatusMulitpleInStore,
 } from "@/store/todoSlice";
-import { useAuth } from "@/lib/auth-context/auth-context";
+// import { useAuth } from "@/lib/auth-context/auth-context";
 import CustomMenu from "../dropdown/dropdown";
 
 export default function ListView({
@@ -18,13 +18,13 @@ export default function ListView({
     taskStatus: "todo" | "inprogress" | "completed"
   ) => iTodo[];
 }) {
-  const { user } = useAuth() as any;
+  // const { user } = useAuth() as any;
   const dispatch = useAppDispatch();
   const tasks = useAppSelector((state) => state.todoSlice.tasks);
   const [sorting, setSorting] = useState("asc");
 
   const handleDeleteMultiple = async () => {
-    await Todo.deleteMultipleTasks(user?.email, multiSelectRows);
+    // await Todo.deleteMultipleTasks(user?.email, multiSelectRows);
     dispatch(deleteMultipleInStore(multiSelectRows));
     setMultiSelectRows([]);
   };
@@ -44,12 +44,12 @@ export default function ListView({
   const handleChangeStatusMultiple = async (
     status: "todo" | "inprogress" | "completed"
   ) => {
-    await Todo.updateMultipleStatus(user?.email, multiSelectRows, status);
+    // await Todo.updateMultipleStatus(user?.email, multiSelectRows, status);
     dispatch(updateStatusMulitpleInStore({ ids: multiSelectRows, status }));
     setMultiSelectRows([]);
   };
 
-  console.log(user)
+  // console.log(user)
   const changeStatus = [
     {
       label: "TODO",

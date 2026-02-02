@@ -26,7 +26,7 @@ import { Ellipsis, PencilLine, Trash2 } from "lucide-react";
 import moment from "moment";
 import CustomMenu from "../dropdown/dropdown";
 import { Todo } from "@/lib/Todo/Todo";
-import { useAuth } from "@/lib/auth-context/auth-context";
+// import { useAuth } from "@/lib/auth-context/auth-context";
 import EditTaskModal from "../modals/edittaskmodal";
 
 export default function KanbanBoard({
@@ -187,7 +187,7 @@ export const SortableTask = ({ task }: { task: iTodo }) => {
     setShowEditTaskModal(false);
   };
 
-  const { user } = useAuth() as any;
+  // const { user } = useAuth() as any;
   const threedots = [
     {
       label: "Edit",
@@ -203,7 +203,7 @@ export const SortableTask = ({ task }: { task: iTodo }) => {
 
   const handleDeleteTask = () => {
     const newObj = new Todo(task);
-    newObj.deleteTaskInFirebase(user?.email);
+    // newObj.deleteTaskInFirebase(user?.email);
     dispatch(deleteTask(newObj.id));
   };
 

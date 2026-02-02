@@ -49,7 +49,7 @@ const Addtaskmodal = ({ closeModal }: { closeModal: () => void }) => {
       if (newTodo) {
         const newTodoObj = new Todo(newTodo);
         if (user) {
-          await newTodoObj.uploadDataToFirebase(
+          await newTodoObj.uploadDataToLocalStorage(
             user?.email,
             fileUpload ?? undefined
           );

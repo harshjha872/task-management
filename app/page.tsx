@@ -45,10 +45,10 @@ export default function Home() {
 
   useEffect(() => {
     (async () => {
-      const allTasks = await Todo.getTasksFromFireStore(user?.email);
+      const allTasks = await Todo.getTasksFromLocalStorage(user?.email);
       dispatch(setTasksFromDb(JSON.parse(JSON.stringify(allTasks))));
     })();
-  }, []);
+  }, [user]);
 
   const closeModal = () => {
     setShowAddTaskModal(false);

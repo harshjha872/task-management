@@ -128,7 +128,7 @@ export default function EditTaskModal({
       const editedObj = new Todo(editTodo);
       if (user) {
         try {
-          await editedObj.updateTaskToFirebase(user.email, currentTodo, fileUpload ?? undefined);
+          await editedObj.updateTaskInLocalStorage(user.email, currentTodo, fileUpload ?? undefined);
         } catch(err) {
           console.log(err)
         }
