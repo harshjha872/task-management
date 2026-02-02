@@ -45,11 +45,9 @@ export default function Home() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    console.log("Home useEffect [user] - user:", user);
     if (!user?.email) return;
     (async () => {
       const allTasks = await Todo.getTasksFromLocalStorage(user?.email);
-      console.log("Home useEffect - allTasks fetched:", allTasks);
       dispatch(setTasksFromDb(JSON.parse(JSON.stringify(allTasks))));
     })();
   }, [user]);
@@ -89,6 +87,7 @@ export default function Home() {
   }
 
   const [activeFilters, setActiveFilters] = useState<filters | null>(null);
+
 
   const handlefilterCategory = (category: string) => {
     setActiveFilters((pre) => {

@@ -73,11 +73,12 @@ export default function EditTaskModal({
   const dispatch = useAppDispatch();
 
   const handleSetDate = (date: any) => {
+    if (!date) return;
     setEditTodo(
       (pre) =>
         ({
           ...pre,
-          dueDate: date,
+          dueDate: new Date(date),
         } as iTodo)
     );
   };
@@ -138,7 +139,6 @@ export default function EditTaskModal({
     }
   };
 
-  console.log(editTodo);
 
   //   const handleFormSubmit = () => {
   //     console.log("submit");
